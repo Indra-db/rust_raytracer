@@ -1,0 +1,13 @@
+[package]
+name = "rust_raytracer"
+version = "0.1.0"
+edition = "2021"
+
+description = "rust raytracer - for practicing rust"
+license = "MIT/Apache-2.0"
+repository = ""
+readme = "README.md"
+keywords = ["raytracing", "graphics", "rust"]
+categories = ["graphics"]
+
+[dependencies]
