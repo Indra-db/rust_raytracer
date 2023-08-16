@@ -5,7 +5,7 @@ edition = "2021"
 
 description = "rust raytracer - for practicing rust"
 license = "MIT/Apache-2.0"
-repository = ""
+repository = "https://github.com/Indra-db/rust_raytracer"
 readme = "README.md"
 keywords = ["raytracing", "graphics", "rust"]
 categories = ["graphics"]

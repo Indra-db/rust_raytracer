@@ -16,10 +16,8 @@ pub type FVector3 = EVector<3, f64>;
 pub type FVector4 = EVector<4, f64>;
 
 // 3. impls
-/// fgfdfds
-/// sdfsdfssfd
 impl<T: Copy, const N: usize> EVector<N, T> {
-    pub fn new(data: [T; N]) -> Self {
+    pub const fn new(data: [T; N]) -> Self {
         Self { data }
     }
 
@@ -58,7 +56,6 @@ impl<T: Copy, const N: usize> EVector<N, T> {
     where
         T: Mul<Output = T> + Add<Output = T> + Default,
     {
-        print!("sqr_magnitude: ");
         self.dot(self)
     }
 
@@ -69,7 +66,7 @@ impl<T: Copy, const N: usize> EVector<N, T> {
         Self::sqr_magnitude(self).sqrt()
     }
 
-    pub fn distance(&self, other: &Self, test: f64) -> T
+    pub fn distance(&self, other: &Self) -> T
     where
         T: Sub<Output = T> + Mul<Output = T> + Add<Output = T> + Default + Float,
     {
@@ -136,7 +133,6 @@ impl<T: Copy, const N: usize> EVector<N, T> {
     where
         T: Default + Float + Mul<Output = T> + Add<Output = T> + Copy,
     {
-        let _myfloat: f64 = 5.0;
         let cross = axis.cross(self);
         let dot = cross.dot(other);
         let mag = self.magnitude() * other.magnitude();
