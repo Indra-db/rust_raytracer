@@ -11,5 +11,6 @@ keywords = ["raytracing", "graphics", "rust"]
 categories = ["graphics"]
 
 [dependencies]
+glam = "0.24.1"
 num-traits = "0.2.16"
 sdl2 = "0.35.2"
