@@ -12,11 +12,13 @@
     clippy::suspicious
 )]
 
+mod camera;
 mod math;
 
-extern crate sdl2;
+use glam::Mat4;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
 use std::time::Duration;
 
@@ -46,11 +48,19 @@ fn print_key_mapping() {
 }
 
 fn main() {
+    let rot = Mat4::default();
+    let xy = Mat4::from_rotation_x(0.0);
+    // let vecto = rot.transform_vector3()
+
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let window =
-        video_subsystem.window("Raytracing in Rust", 800, 600).position_centered().build().unwrap();
+    let window = video_subsystem
+        .window("Raytracing in Rust", 800, 600)
+        .position_centered()
+        .opengl()
+        .build()
+        .unwrap();
 
     let mut canvas = window.into_canvas().build().unwrap();
 
@@ -72,6 +82,11 @@ fn main() {
             match event {
                 Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
+                }
+                Event::MouseButtonDown { mouse_btn, x, y, .. } => {
+                    if mouse_btn == MouseButton::Left {
+                        println!("Left mouse button pressed at position: ({}, {})", x, y);
+                    }
                 }
                 _ => {}
             }
