@@ -13,9 +13,11 @@
 )]
 
 mod camera;
+mod material;
 mod math;
+mod ray;
 
-use glam::Mat4;
+use glam::{IVec2, Mat4, Vec3};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
@@ -48,10 +50,6 @@ fn print_key_mapping() {
 }
 
 fn main() {
-    let rot = Mat4::default();
-    let xy = Mat4::from_rotation_x(0.0);
-    // let vecto = rot.transform_vector3()
-
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -76,28 +74,39 @@ fn main() {
         last_fps_time = sdl2::sys::SDL_GetPerformanceCounter();
     }
 
+    let mut camera = camera::Camera::new(Vec3::new(0.0, 2.0, 15.0), 45.0);
+    let mut delta_time: f32 = 0.001;
+
     'running: loop {
-        frame_count += 1;
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
                 }
+                Event::KeyDown { keycode: Some(key), .. } => match key {
+                    Keycode::W | Keycode::S | Keycode::A | Keycode::D | Keycode::Q | Keycode::E => {
+                        camera.camera_translation(delta_time, key);
+                    }
+                    _ => {}
+                },
                 Event::MouseButtonDown { mouse_btn, x, y, .. } => {
                     if mouse_btn == MouseButton::Left {
-                        println!("Left mouse button pressed at position: ({}, {})", x, y);
+                        camera.camera_rotation(delta_time, IVec2::new(x, y));
                     }
                 }
                 _ => {}
             }
         }
 
+        camera.update_look_at();
+
+        frame_count += 1;
         unsafe {
             let current_time = sdl2::sys::SDL_GetPerformanceCounter();
             #[allow(clippy::cast_precision_loss)]
-            let elapsed_seconds = (current_time - last_fps_time) as f64
-                / sdl2::sys::SDL_GetPerformanceFrequency() as f64;
-
+            let elapsed_seconds = (current_time - last_fps_time) as f32
+                / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
+            delta_time = elapsed_seconds;
             if elapsed_seconds >= 1.0 {
                 println!("FPS: {frame_count}");
                 frame_count = 0;

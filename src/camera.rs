@@ -1,4 +1,5 @@
 use glam::{IVec2, Mat4, Vec3, Vec3A, Vec4};
+use sdl2::keyboard::Keycode;
 
 pub struct Camera {
     pub look_at: Mat4,
@@ -12,14 +13,10 @@ pub struct Camera {
     update_look_at: bool,
 }
 
-trait Update {
-    fn update(&mut self);
-}
-
 impl Camera {
     const WORLD_UP_VECTOR: Vec3 = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
 
-    pub fn new(position: Vec3, fov: f32, speed: f32, scale_factor: f32) -> Self {
+    pub fn new(position: Vec3, fov: f32) -> Self {
         let mut camera = Self {
             look_at: Mat4::default(),
             forward_vector: Vec4::default(),
@@ -27,17 +24,12 @@ impl Camera {
             up_vector: Vec4::default(),
             position,
             fov,
-            speed,
-            scale_factor,
+            speed: 4.0,
+            scale_factor: (fov.to_radians() / 2.0).tan(),
             update_look_at: true,
         };
         camera.calculate_look_at();
         camera
-    }
-
-    #[inline]
-    pub fn get_fov(&self) -> f32 {
-        self.fov
     }
 
     #[inline]
@@ -57,53 +49,84 @@ impl Camera {
     }
 
     #[inline]
-    pub fn get_fov_degrees(&self) -> f32 {
+    pub const fn get_fov_degrees(&self) -> f32 {
         self.fov
     }
 
     #[inline]
-    pub fn get_scale_factor(&self) -> f32 {
-        let vec: Vec<&dyn Update> = vec![];
+    pub const fn get_scale_factor(&self) -> f32 {
         self.scale_factor
     }
 
-    pub fn update(&mut self, delta_time: f32) {
-        self.camera_translation(delta_time);
-        self.camera_rotation(delta_time);
+    pub fn update_look_at(&mut self) {
         if self.update_look_at {
             self.calculate_look_at();
         }
     }
 
-    fn camera_translation(&mut self, delta_time: f32) {
-        let mut mouse_position: IVec2 = IVec2::default();
-        unsafe {
-            sdl2::sys::SDL_GetRelativeMouseState(
-                &mut mouse_position.x as *mut i32,
-                &mut mouse_position.y as *mut i32,
-            );
+    pub fn camera_translation(&mut self, delta_time: f32, sdl_keycode: Keycode) {
+        match sdl_keycode {
+            Keycode::W => {
+                self.position += self.forward_vector.truncate() * self.speed * delta_time;
+            }
+            Keycode::S => {
+                self.position -= self.forward_vector.truncate() * self.speed * delta_time;
+            }
+            Keycode::A => {
+                self.position -= self.right_vector.truncate() * self.speed * delta_time;
+            }
+            Keycode::D => {
+                self.position += self.right_vector.truncate() * self.speed * delta_time;
+            }
+            Keycode::Q => {
+                self.position += Self::WORLD_UP_VECTOR * self.speed * delta_time;
+            }
+            Keycode::E => {
+                self.position -= Self::WORLD_UP_VECTOR * self.speed * delta_time;
+            }
+            _ => {}
         }
+
+        self.update_look_at = true;
     }
 
-    fn camera_rotation(&mut self, delta_time: f32) {
-        todo!("Implement camera rotation");
+    #[allow(clippy::cast_precision_loss)]
+    pub fn camera_rotation(&mut self, delta_time: f32, mouse_position: IVec2) {
+        let rotation_x =
+            Mat4::from_rotation_x((-mouse_position.x as f32).to_radians() * delta_time);
+        Mat4::transform_vector3(&rotation_x, Self::WORLD_UP_VECTOR);
+        let rotation_y =
+            Mat4::from_rotation_y((-mouse_position.y as f32).to_radians() * delta_time);
+        Mat4::transform_vector3(&rotation_y, self.right_vector.truncate());
+
+        self.update_look_at = true;
     }
 
     fn calculate_look_at(&mut self) {
+        //self.right_vector =
+        //    self.forward_vector.truncate().cross(Self::WORLD_UP_VECTOR).normalize().extend(0.0);
+        //
+        //self.up_vector = self
+        //    .right_vector
+        //    .truncate()
+        //    .cross(self.forward_vector.truncate())
+        //    .normalize()
+        //    .extend(0.0);
+
         self.right_vector =
-            self.forward_vector.truncate().cross(Self::WORLD_UP_VECTOR).normalize().extend(0.0);
+            Self::WORLD_UP_VECTOR.cross(self.forward_vector.truncate()).normalize().extend(0.0);
 
         self.up_vector = self
-            .right_vector
+            .forward_vector
             .truncate()
-            .cross(self.forward_vector.truncate())
+            .cross(self.right_vector.truncate())
             .normalize()
             .extend(0.0);
 
         self.look_at = Mat4 {
-            x_axis: self.right_vector,
-            y_axis: self.up_vector,
-            z_axis: self.forward_vector,
+            x_axis: self.right_vector.truncate().extend(0.0),
+            y_axis: self.up_vector.truncate().extend(0.0),
+            z_axis: self.forward_vector.truncate().extend(0.0),
             w_axis: Vec4::new(self.position.x, self.position.y, self.position.z, 1.0),
         }
     }
