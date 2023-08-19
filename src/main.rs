@@ -13,7 +13,8 @@
 )]
 
 mod camera;
-mod material;
+mod hitrecord;
+mod materials;
 mod math;
 mod ray;
 
@@ -22,6 +23,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
+use std::rc::Rc;
 use std::time::Duration;
 
 fn print_key_mapping() {
