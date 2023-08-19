@@ -3,9 +3,9 @@ use glam::Vec3;
 pub type RGBColor = Vec3;
 
 pub struct MaterialProperties {
-    diffuse_color: RGBColor,
-    diffuse_reflectance: f32,
-    reflectiveness_environment: f32,
+    pub diffuse_color: RGBColor,
+    pub diffuse_reflectance: f32,
+    pub reflectiveness_environment: f32,
 }
 
 pub trait Material {

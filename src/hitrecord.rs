@@ -1,4 +1,4 @@
-use crate::materials::material_properties::*;
+use crate::materials::material_properties::Material;
 use glam::Vec3;
 use std::rc::Rc;
 

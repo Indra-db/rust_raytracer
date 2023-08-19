@@ -14,11 +14,11 @@ impl Default for Ray {
 }
 
 impl Ray {
-    pub fn new(origin: Vec3, direction: Vec3) -> Self {
+    pub const fn new(origin: Vec3, direction: Vec3) -> Self {
         Self { origin, direction, t_min: 0.0001, t_max: f32::MAX }
     }
 
-    pub fn new_with_limits(origin: Vec3, direction: Vec3, t_min: f32, t_max: f32) -> Self {
+    pub const fn new_with_limits(origin: Vec3, direction: Vec3, t_min: f32, t_max: f32) -> Self {
         Self { origin, direction, t_min, t_max }
     }
 
