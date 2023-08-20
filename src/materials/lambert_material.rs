@@ -8,6 +8,21 @@ pub struct LambertianMaterial {
     pub properties: MaterialProperties,
 }
 
+impl LambertianMaterial {
+    pub fn new(
+        diffuse_color: RGBColor,
+        diffuse_reflectance: f32,
+        reflectiveness_environment: f32,
+    ) -> Self {
+        Self {
+            properties: MaterialProperties {
+                diffuse_color,
+                diffuse_reflectance,
+                reflectiveness_environment,
+            },
+        }
+    }
+}
 impl Material for LambertianMaterial {
     fn shade(
         &self,

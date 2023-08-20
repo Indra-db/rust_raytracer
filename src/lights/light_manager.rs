@@ -1,6 +1,7 @@
 use super::light_properties::{Light, LightProperties, LightType};
 use glam::Vec3;
 use std::boxed::Box;
+
 pub enum Axis {
     X,
     Y,

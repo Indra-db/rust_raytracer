@@ -20,6 +20,7 @@ mod math;
 mod objects;
 mod ray;
 mod renderer;
+mod world;
 
 use glam::{IVec2, Mat4, Vec3};
 use sdl2::event::Event;
