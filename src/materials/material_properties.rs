@@ -16,3 +16,16 @@ pub trait Material {
         view_direction: &Vec3,
     ) -> RGBColor;
 }
+
+pub struct DefaultMaterial {}
+
+impl Material for DefaultMaterial {
+    fn shade(
+        &self,
+        _hitrecord: &HitRecord,
+        _light_direction: &Vec3,
+        _view_direction: &Vec3,
+    ) -> RGBColor {
+        RGBColor::ZERO
+    }
+}

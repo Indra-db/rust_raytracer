@@ -3,8 +3,8 @@ use glam::Vec3;
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
-    t_min: f32,
-    t_max: f32,
+    pub t_min: f32,
+    pub t_max: f32,
 }
 
 impl Default for Ray {

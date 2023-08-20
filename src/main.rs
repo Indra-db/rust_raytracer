@@ -14,9 +14,12 @@
 
 mod camera;
 mod hitrecord;
+mod lights;
 mod materials;
 mod math;
+mod objects;
 mod ray;
+mod renderer;
 
 use glam::{IVec2, Mat4, Vec3};
 use sdl2::event::Event;
