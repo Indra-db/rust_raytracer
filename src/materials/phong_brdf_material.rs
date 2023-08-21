@@ -10,11 +10,11 @@ pub struct PhongBRDF {
     pub is_metal: bool,
 }
 
-impl Material for PhongBRDF {
+impl<'mm> Material<'mm> for PhongBRDF {
     #[allow(clippy::cast_precision_loss)]
     fn shade(
         &self,
-        hitrecord: &HitRecord,
+        hitrecord: &HitRecord<'mm>,
         light_direction: &Vec3,
         view_direction: &Vec3,
     ) -> RGBColor {
@@ -32,5 +32,9 @@ impl Material for PhongBRDF {
 
         let diffuse = brdf::lambert_color(&self.properties.diffuse_color, &kd);
         specular + diffuse
+    }
+
+    fn get_reflectiveness_environment(&self) -> f32 {
+        self.properties.reflectiveness_environment
     }
 }

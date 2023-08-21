@@ -23,13 +23,17 @@ impl LambertianMaterial {
         }
     }
 }
-impl Material for LambertianMaterial {
+impl<'mm> Material<'mm> for LambertianMaterial {
     fn shade(
         &self,
-        _hitrecord: &HitRecord,
+        _hitrecord: &HitRecord<'mm>,
         _light_direction: &Vec3,
         _view_direction: &Vec3,
     ) -> RGBColor {
         brdf::lambert(&self.properties.diffuse_color, self.properties.diffuse_reflectance)
+    }
+
+    fn get_reflectiveness_environment(&self) -> f32 {
+        self.properties.reflectiveness_environment
     }
 }

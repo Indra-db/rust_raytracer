@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
+//#![deny(rust_2018_idioms)]
 #![warn(
     clippy::all,
     clippy::pedantic,
@@ -23,12 +24,19 @@ mod renderer;
 mod world;
 
 use glam::{IVec2, Mat4, Vec3};
+use lights::light_manager::{self, LightManager};
+use lights::light_properties::{LightProperties, LightType};
+use lights::point_light::PointLight;
+use materials::material_manager::{self, MaterialManager};
+use objects::object_properties::ObjectProperties;
+use objects::sphere::Sphere;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
 use std::rc::Rc;
 use std::time::Duration;
+use world::scenegraph::Scenegraph;
 
 fn print_key_mapping() {
     println!(
@@ -81,7 +89,24 @@ fn main() {
     }
 
     let mut camera = camera::Camera::new(Vec3::new(0.0, 2.0, 15.0), 45.0);
+    let mut scene: Scenegraph = Scenegraph::new();
+
     let mut delta_time: f32 = 0.001;
+    let mut material_manager: MaterialManager = MaterialManager::new();
+    material_manager.add_lambert_material("Grey", 0);
+    let mut light_manager: LightManager = LightManager::new();
+    light_manager.add_light(Box::new(PointLight::new(
+        LightProperties::new(Vec3::new(0.84, 0.8, 0.6), 100.0, true, LightType::Point),
+        Vec3::new(-0.5, 5.5, 6.5),
+    )));
+
+    scene.add_object(Box::new(Sphere::new(
+        ObjectProperties::new(
+            Vec3::new(-1.0, 4.0, 0.0),
+            material_manager.get_material("Grey").unwrap(),
+        ),
+        1.0,
+    )));
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -120,4 +145,6 @@ fn main() {
             }
         }
     }
+
+    drop(scene);
 }

@@ -9,10 +9,10 @@ pub struct LambertPhongMaterial {
     pub phong_exponent: i32,
 }
 
-impl Material for LambertPhongMaterial {
+impl<'mm> Material<'mm> for LambertPhongMaterial {
     fn shade(
         &self,
-        hitrecord: &HitRecord,
+        hitrecord: &HitRecord<'mm>,
         light_direction: &Vec3,
         view_direction: &Vec3,
     ) -> RGBColor {
@@ -24,5 +24,9 @@ impl Material for LambertPhongMaterial {
                 view_direction,
                 &hitrecord.normal,
             )
+    }
+
+    fn get_reflectiveness_environment(&self) -> f32 {
+        self.properties.reflectiveness_environment
     }
 }

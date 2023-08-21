@@ -23,13 +23,6 @@ pub fn create_linear_fresnel_hash_map() -> HashMap<&'static str, RGBColor> {
     map
 }
 
-pub fn get_linear_fresnel_rgb<'a>(
-    name: &'a str,
-    fresnel_map: &'a HashMap<&'a str, RGBColor>,
-) -> Option<&'a RGBColor> {
-    fresnel_map.get(name)
-}
-
 pub fn create_diffuse_rgb_hash_map() -> HashMap<&'static str, RGBColor> {
     let mut map = HashMap::new();
 
@@ -183,11 +176,4 @@ pub fn create_diffuse_rgb_hash_map() -> HashMap<&'static str, RGBColor> {
     map.insert("YellowGreen", RGBColor { x: 154.0, y: 205.0, z: 50.0 });
 
     map
-}
-
-pub fn get_diffuse_rgb<'a>(
-    name: &'a str,
-    rgb_map: &'a HashMap<&str, RGBColor>,
-) -> Option<&'a RGBColor> {
-    rgb_map.get(name)
 }

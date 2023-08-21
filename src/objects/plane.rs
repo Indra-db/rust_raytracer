@@ -3,19 +3,19 @@ use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
 use glam::Vec3;
 
-pub struct Plane {
-    pub object_properties: ObjectProperties,
+pub struct Plane<'mm> {
+    pub object_properties: ObjectProperties<'mm>,
     pub normal: Vec3,
 }
 
-impl Plane {
-    pub fn new(object_properties: ObjectProperties, normal: Vec3) -> Self {
+impl<'mm> Plane<'mm> {
+    pub fn new(object_properties: ObjectProperties<'mm>, normal: Vec3) -> Self {
         Self { object_properties, normal: normal.normalize() }
     }
 }
 
-impl Object for Plane {
-    fn hit(&self, ray: &Ray, hit_record: &mut HitRecord, _is_shadow_ray: bool) -> bool {
+impl<'mm> Object<'mm> for Plane<'mm> {
+    fn hit(&self, ray: &Ray, hit_record: &mut HitRecord<'mm>, _is_shadow_ray: bool) -> bool {
         // Calculate the dot product between the ray direction and the plane's normal.
         let ray_dot_normal = ray.direction.dot(self.normal);
 
@@ -40,7 +40,7 @@ impl Object for Plane {
         hit_record.t = intersection_distance;
         hit_record.hitpoint = ray.origin + (intersection_distance * ray.direction);
         hit_record.normal = self.normal;
-        hit_record.material = self.object_properties.material.clone();
+        hit_record.material = Some(self.object_properties.material);
         true
     }
 

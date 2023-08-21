@@ -51,4 +51,8 @@ impl Light for DirectionalLight {
     fn get_type_light(&self) -> LightType {
         self.light_properties.light_type.clone()
     }
+
+    fn is_light_enabled(&self) -> bool {
+        self.light_properties.is_enabled
+    }
 }

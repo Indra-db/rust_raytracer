@@ -21,13 +21,13 @@ impl RoughnessConstants {
     }
 }
 
-pub struct MaterialManager<'a> {
+pub struct MaterialManager<'a, 'mm> {
     linear_freshnel: HashMap<&'a str, RGBColor>,
     diffuse_colors: HashMap<&'a str, RGBColor>,
-    pub materials: HashMap<String, Box<dyn Material>>,
+    pub materials: HashMap<String, Box<dyn Material<'mm>>>,
 }
 
-impl MaterialManager<'_> {
+impl<'a, 'mm> MaterialManager<'a, 'mm> {
     const DIFFUSE_REFLECTANCE: f32 = 1.0;
     const SPECULAR_REFLECTANCE: f32 = 1.0;
     const PHONG_EXPONENT: f32 = 60.0;
@@ -40,14 +40,14 @@ impl MaterialManager<'_> {
         }
     }
 
-    pub fn add_material(&mut self, name: String, material: Box<dyn Material>) {
+    pub fn add_material(&mut self, name: String, material: Box<dyn Material<'mm>>) {
         if !self.materials.contains_key(&name) {
             self.materials.insert(name, material);
         }
     }
 
-    pub fn get_material(&self, name: &str) -> Option<&Box<dyn Material>> {
-        self.materials.get(name)
+    pub fn get_material(&self, name: &str) -> Option<&dyn Material<'mm>> {
+        self.materials.get(name).map(AsRef::as_ref)
     }
 
     pub fn add_lambert_material(&mut self, color_name: &str, reflectiveness: i32) {

@@ -25,6 +25,7 @@ pub trait Light {
     fn get_intensity_mut(&mut self) -> &mut f32;
     fn toggle_light(&mut self);
     fn get_type_light(&self) -> LightType;
+    fn is_light_enabled(&self) -> bool;
 }
 
 impl LightProperties {

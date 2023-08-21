@@ -3,19 +3,19 @@ use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
 use glam::Vec3;
 
-pub struct Sphere {
-    pub object_properties: ObjectProperties,
+pub struct Sphere<'mm> {
+    pub object_properties: ObjectProperties<'mm>,
     pub radius: f32,
 }
 
-impl Sphere {
-    pub fn new(object_properties: ObjectProperties, radius: f32) -> Self {
+impl<'mm> Sphere<'mm> {
+    pub fn new(object_properties: ObjectProperties<'mm>, radius: f32) -> Self {
         Self { object_properties, radius }
     }
 }
 
-impl Object for Sphere {
-    fn hit(&self, ray: &Ray, hit_record: &mut HitRecord, _is_shadow_ray: bool) -> bool {
+impl<'mm> Object<'mm> for Sphere<'mm> {
+    fn hit(&self, ray: &Ray, hit_record: &mut HitRecord<'mm>, _is_shadow_ray: bool) -> bool {
         // Vector from the ray origin to the sphere center
         let ray_to_sphere = self.object_properties.position - ray.origin;
 
@@ -48,7 +48,7 @@ impl Object for Sphere {
         hit_record.t = t0;
         hit_record.hitpoint = ray.origin + t0 * ray.direction;
         hit_record.normal = (hit_record.hitpoint - self.object_properties.position).normalize();
-        hit_record.material = self.object_properties.material.clone();
+        hit_record.material = Some(self.object_properties.material);
 
         true
     }
