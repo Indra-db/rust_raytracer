@@ -6,11 +6,11 @@ use std::rc::Rc;
 
 pub struct ObjectProperties<'mm> {
     pub position: Vec3,
-    pub material: &'mm dyn Material<'mm>,
+    pub material: &'mm dyn Material,
 }
 
 impl<'mm> ObjectProperties<'mm> {
-    pub const fn new(position: Vec3, material: &'mm dyn Material<'mm>) -> Self {
+    pub const fn new(position: Vec3, material: &'mm dyn Material) -> Self {
         Self { position, material }
     }
 }

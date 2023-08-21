@@ -8,10 +8,20 @@ pub struct MaterialProperties {
     pub reflectiveness_environment: f32,
 }
 
-pub trait Material<'mm> {
+impl MaterialProperties {
+    pub const fn new(
+        diffuse_color: RGBColor,
+        diffuse_reflectance: f32,
+        reflectiveness_environment: f32,
+    ) -> Self {
+        Self { diffuse_color, diffuse_reflectance, reflectiveness_environment }
+    }
+}
+
+pub trait Material {
     fn shade(
         &self,
-        hitrecord: &HitRecord<'mm>,
+        hitrecord: &HitRecord<'_>,
         light_direction: &Vec3,
         view_direction: &Vec3,
     ) -> RGBColor;
@@ -21,10 +31,10 @@ pub trait Material<'mm> {
 
 pub struct DefaultMaterial {}
 
-impl<'mm> Material<'mm> for DefaultMaterial {
+impl Material for DefaultMaterial {
     fn shade(
         &self,
-        _hitrecord: &HitRecord<'mm>,
+        _hitrecord: &HitRecord<'_>,
         _light_direction: &Vec3,
         _view_direction: &Vec3,
     ) -> RGBColor {

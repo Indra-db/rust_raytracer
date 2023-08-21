@@ -4,15 +4,20 @@ use crate::lights::light_properties::Light;
 use crate::ray::Ray;
 use crate::world::scenegraph::Scenegraph;
 use glam::{Mat4, Vec2, Vec3, Vec4};
+use sdl2::render::WindowCanvas;
 pub type RGBColor = Vec3;
 use crate::math::ColorTypeFunctionality;
-use sdl2::pixels::PixelFormatEnum;
-use sdl2::surface::Surface;
-use sdl2::sys::{SDL_LockSurface, SDL_MapRGB, SDL_UnlockSurface, SDL_UpdateWindowSurface};
+use sdl2::pixels::{Color, PixelFormatEnum};
+use sdl2::surface::{Surface, SurfaceRef};
+use sdl2::sys::{
+    SDL_GetWindowSurface, SDL_LockSurface, SDL_MapRGB, SDL_Surface, SDL_UnlockSurface,
+    SDL_UpdateWindowSurface,
+};
 
 pub struct Renderer<'mm> {
-    sdl_window: sdl2::video::Window,
-    front_buffer: sdl2::surface::Surface<'static>,
+    sdl_window: &'mm mut WindowCanvas,
+    front_buffer: *mut SDL_Surface,
+    //front_buffer: sdl2::surface::Surface<'static>,
     back_buffer: sdl2::surface::Surface<'static>,
     back_buffer_pixels: *mut u32,
     ray: Ray,
@@ -29,16 +34,18 @@ pub struct Renderer<'mm> {
 }
 
 impl<'mm> Renderer<'mm> {
-    pub fn new(sdl_window: sdl2::video::Window) -> Self {
-        let width = sdl_window.size().0;
-        let height = sdl_window.size().1;
+    pub fn new(sdl_window: &'mm mut WindowCanvas) -> Self {
+        let width = sdl_window.window().size().0;
+        let height = sdl_window.window().size().1;
         let aspect_ratio = width as f32 / height as f32;
 
-        let screen_bits = PixelFormatEnum::ARGB8888.into_masks().unwrap();
-        let front_buffer = Surface::from_pixelmasks(width, height, screen_bits).unwrap();
+        //let screen_bits = PixelFormatEnum::ARGB8888.into_masks().unwrap();
+        //let front_buffer = Surface::from_pixelmasks(width, height, screen_bits).unwrap();
+        let front_buffer: *mut SDL_Surface =
+            unsafe { SDL_GetWindowSurface(sdl_window.window_mut().raw()) };
 
-        let screen_bits = PixelFormatEnum::Index8.into_masks().unwrap();
-        let mut back_buffer = Surface::from_pixelmasks(width, height, screen_bits).unwrap();
+        //let screen_bits = PixelFormatEnum::Index8.into_masks().unwrap();
+        let mut back_buffer = Surface::new(width, height, PixelFormatEnum::ABGR8888).unwrap();
 
         let back_buffer_pixels = back_buffer.without_lock_mut().unwrap().as_mut_ptr() as *mut u32;
         let ray = Ray::new(Vec3::ZERO, Vec3::ZERO);
@@ -81,8 +88,8 @@ impl<'mm> Renderer<'mm> {
         let mut pixel: Vec4;
         let camera_look_at: &Mat4 = &camera.look_at;
         let scale_factor = camera.get_scale_factor();
-
         //loop over all the pixels
+
         for y in 0..self.height {
             self.get_ray_world_coord_y(y, scale_factor);
 
@@ -102,23 +109,30 @@ impl<'mm> Renderer<'mm> {
                     self.calculate_color(scenegraph, lights, self.amount_bounces);
 
                 final_color.max_to_one();
-
+                //println!("6");
                 #[allow(clippy::cast_precision_loss)]
                 unsafe {
                     *self.back_buffer_pixels.add((x + y * self.width) as usize) = SDL_MapRGB(
                         self.back_buffer.pixel_format().raw(),
-                        (final_color.x * 255.0) as u8,
-                        (final_color.y * 255.0) as u8,
-                        (final_color.z * 255.0) as u8,
+                        (0.0 * 255.0) as u8,
+                        (0.0 * 255.0) as u8,
+                        (0.0 * 255.0) as u8,
                     );
                 }
+                //println!("7");
             }
         }
         unsafe {
             SDL_UnlockSurface(self.back_buffer.raw());
-            self.back_buffer.blit(None, &mut self.front_buffer, None).unwrap();
-            SDL_UpdateWindowSurface(self.sdl_window.raw());
+            self.back_buffer.blit(None, SurfaceRef::from_ll_mut(self.front_buffer), None).unwrap();
+            SDL_UpdateWindowSurface(self.sdl_window.window().raw());
         }
+        //update_window
+
+        //self.sdl_window.set_draw_color(Color::RGB(0, 0, 0));
+        //self.sdl_window.clear();
+        //self.sdl_window.window_mut().
+        self.sdl_window.present();
     }
 
     fn calculate_color(

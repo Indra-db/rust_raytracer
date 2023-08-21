@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
-//#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms)]
 #![warn(
     clippy::all,
     clippy::pedantic,
@@ -14,6 +14,7 @@
 )]
 
 mod camera;
+mod canvas;
 mod hitrecord;
 mod lights;
 mod materials;
@@ -23,13 +24,19 @@ mod ray;
 mod renderer;
 mod world;
 
+use canvas::Canvas;
 use glam::{IVec2, Mat4, Vec3};
 use lights::light_manager::{self, LightManager};
 use lights::light_properties::{LightProperties, LightType};
 use lights::point_light::PointLight;
+use materials::lambert_material;
+use materials::lambert_material::LambertianMaterial;
 use materials::material_manager::{self, MaterialManager};
+use materials::material_properties::{Material, MaterialProperties, RGBColor};
 use objects::object_properties::ObjectProperties;
+use objects::plane::Plane;
 use objects::sphere::Sphere;
+use renderer::Renderer;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
@@ -64,23 +71,8 @@ fn print_key_mapping() {
 }
 
 fn main() {
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-
-    let window = video_subsystem
-        .window("Raytracing in Rust", 800, 600)
-        .position_centered()
-        .opengl()
-        .build()
-        .unwrap();
-
-    let mut canvas = window.into_canvas().build().unwrap();
-
-    canvas.set_draw_color(Color::RGB(255, 0, 0));
-    canvas.clear();
-    canvas.present();
-
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut canvas = Canvas::new(960, 600).unwrap();
+    let mut event_pump = canvas.sdl_context.event_pump().unwrap();
 
     let mut frame_count = 0u32;
     let mut last_fps_time;
@@ -89,24 +81,37 @@ fn main() {
     }
 
     let mut camera = camera::Camera::new(Vec3::new(0.0, 2.0, 15.0), 45.0);
-    let mut scene: Scenegraph = Scenegraph::new();
 
     let mut delta_time: f32 = 0.001;
-    let mut material_manager: MaterialManager = MaterialManager::new();
+
+    let mut material_manager: MaterialManager<'_> = MaterialManager::new();
     material_manager.add_lambert_material("Grey", 0);
+
     let mut light_manager: LightManager = LightManager::new();
     light_manager.add_light(Box::new(PointLight::new(
         LightProperties::new(Vec3::new(0.84, 0.8, 0.6), 100.0, true, LightType::Point),
         Vec3::new(-0.5, 5.5, 6.5),
     )));
 
+    let grey = LambertianMaterial::new(RGBColor::new(1.0, 1.0, 1.0), 0.0, 0.0);
+    let mut scene: Scenegraph<'_> = Scenegraph::new();
+
     scene.add_object(Box::new(Sphere::new(
-        ObjectProperties::new(
-            Vec3::new(-1.0, 4.0, 0.0),
-            material_manager.get_material("Grey").unwrap(),
-        ),
+        ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), &grey),
         1.0,
     )));
+
+    scene.add_object(Box::new(Plane::new(
+        ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), &grey),
+        Vec3::new(0.0, 1.0, 0.0),
+    )));
+
+    scene.add_object(Box::new(Plane::new(
+        ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), &grey),
+        Vec3::new(0.0, 0.0, 1.0),
+    )));
+
+    let mut render_system = Renderer::new(&mut canvas.sdl_canvas);
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -131,6 +136,10 @@ fn main() {
 
         camera.update_look_at();
 
+        scene.update(delta_time);
+
+        render_system.render(&scene, &camera, light_manager.get_lights());
+
         frame_count += 1;
         unsafe {
             let current_time = sdl2::sys::SDL_GetPerformanceCounter();
@@ -145,6 +154,4 @@ fn main() {
             }
         }
     }
-
-    drop(scene);
 }

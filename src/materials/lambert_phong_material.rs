@@ -9,10 +9,10 @@ pub struct LambertPhongMaterial {
     pub phong_exponent: i32,
 }
 
-impl<'mm> Material<'mm> for LambertPhongMaterial {
+impl<'mm> Material for LambertPhongMaterial {
     fn shade(
         &self,
-        hitrecord: &HitRecord<'mm>,
+        hitrecord: &HitRecord<'_>,
         light_direction: &Vec3,
         view_direction: &Vec3,
     ) -> RGBColor {

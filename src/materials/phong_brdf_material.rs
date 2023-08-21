@@ -10,11 +10,11 @@ pub struct PhongBRDF {
     pub is_metal: bool,
 }
 
-impl<'mm> Material<'mm> for PhongBRDF {
+impl Material for PhongBRDF {
     #[allow(clippy::cast_precision_loss)]
     fn shade(
         &self,
-        hitrecord: &HitRecord<'mm>,
+        hitrecord: &HitRecord<'_>,
         light_direction: &Vec3,
         view_direction: &Vec3,
     ) -> RGBColor {

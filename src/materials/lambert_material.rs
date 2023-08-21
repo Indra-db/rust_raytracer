@@ -23,10 +23,10 @@ impl LambertianMaterial {
         }
     }
 }
-impl<'mm> Material<'mm> for LambertianMaterial {
+impl Material for LambertianMaterial {
     fn shade(
         &self,
-        _hitrecord: &HitRecord<'mm>,
+        _hitrecord: &HitRecord<'_>,
         _light_direction: &Vec3,
         _view_direction: &Vec3,
     ) -> RGBColor {
