@@ -19,12 +19,12 @@ impl Camera {
     pub fn new(position: Vec3, fov: f32) -> Self {
         let mut camera = Self {
             look_at: Mat4::default(),
-            forward_vector: Vec4::default(),
+            forward_vector: Vec4::new(0.0, 0.0, 1.0, 0.0),
             right_vector: Vec4::default(),
             up_vector: Vec4::default(),
             position,
             fov,
-            speed: 4.0,
+            speed: 400.0,
             scale_factor: (fov.to_radians() / 2.0).tan(),
             update_look_at: true,
         };
@@ -67,10 +67,10 @@ impl Camera {
     pub fn camera_translation(&mut self, delta_time: f32, sdl_keycode: Keycode) {
         match sdl_keycode {
             Keycode::W => {
-                self.position += self.forward_vector.truncate() * self.speed * delta_time;
+                self.position -= self.forward_vector.truncate() * self.speed * delta_time;
             }
             Keycode::S => {
-                self.position -= self.forward_vector.truncate() * self.speed * delta_time;
+                self.position += self.forward_vector.truncate() * self.speed * delta_time;
             }
             Keycode::A => {
                 self.position -= self.right_vector.truncate() * self.speed * delta_time;
@@ -93,12 +93,11 @@ impl Camera {
     #[allow(clippy::cast_precision_loss)]
     pub fn camera_rotation(&mut self, delta_time: f32, mouse_position: IVec2) {
         let rotation_x =
-            Mat4::from_rotation_x((-mouse_position.x as f32).to_radians() * delta_time);
-        Mat4::transform_vector3(&rotation_x, Self::WORLD_UP_VECTOR);
+            Mat4::from_rotation_y((-mouse_position.x as f32).to_radians() * delta_time);
         let rotation_y =
-            Mat4::from_rotation_y((-mouse_position.y as f32).to_radians() * delta_time);
-        Mat4::transform_vector3(&rotation_y, self.right_vector.truncate());
+            Mat4::from_rotation_x((-mouse_position.y as f32).to_radians() * delta_time);
 
+        self.forward_vector = 1.0 * rotation_x * self.forward_vector;
         self.update_look_at = true;
     }
 

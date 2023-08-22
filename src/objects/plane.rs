@@ -32,9 +32,9 @@ impl<'mm> Object<'mm> for Plane<'mm> {
             return false;
         }
 
-        if hit_record.t < intersection_distance {
-            return true;
-        }
+        //if hit_record.t < intersection_distance {
+        //    return true;
+        //}
 
         // Update the hit record
         hit_record.t = intersection_distance;

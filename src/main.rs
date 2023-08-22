@@ -26,6 +26,7 @@ mod world;
 
 use canvas::Canvas;
 use glam::{IVec2, Mat4, Vec3};
+use lights::directional_light::DirectionalLight;
 use lights::light_manager::{self, LightManager};
 use lights::light_properties::{LightProperties, LightType};
 use lights::point_light::PointLight;
@@ -71,7 +72,7 @@ fn print_key_mapping() {
 }
 
 fn main() {
-    let mut canvas = Canvas::new(960, 600).unwrap();
+    let mut canvas = Canvas::new(640, 480).unwrap();
     let mut event_pump = canvas.sdl_context.event_pump().unwrap();
 
     let mut frame_count = 0u32;
@@ -88,12 +89,18 @@ fn main() {
     material_manager.add_lambert_material("Grey", 0);
 
     let mut light_manager: LightManager = LightManager::new();
+
     light_manager.add_light(Box::new(PointLight::new(
-        LightProperties::new(Vec3::new(0.84, 0.8, 0.6), 100.0, true, LightType::Point),
+        LightProperties::new(Vec3::new(1.0, 1.0, 1.0), 100.0, true, LightType::Point),
         Vec3::new(-0.5, 5.5, 6.5),
     )));
 
-    let grey = LambertianMaterial::new(RGBColor::new(1.0, 1.0, 1.0), 0.0, 0.0);
+    //light_manager.add_light(Box::new(DirectionalLight::new(
+    //    LightProperties::new(Vec3::new(0.6, 0.35, 0.3), 100.0, true, LightType::Point),
+    //    Vec3::new(0.0, -1.0, 0.0),
+    //)));
+
+    let grey = LambertianMaterial::new(RGBColor::new(0.5, 0.5, 0.5), 1.0, 0.0);
     let mut scene: Scenegraph<'_> = Scenegraph::new();
 
     scene.add_object(Box::new(Sphere::new(
@@ -111,8 +118,9 @@ fn main() {
         Vec3::new(0.0, 0.0, 1.0),
     )));
 
-    let mut render_system = Renderer::new(&mut canvas.sdl_canvas);
-
+    let mut render_system = Renderer::new(&mut canvas);
+    let mut prev_mouse_x = 0;
+    let mut prev_mouse_y = 0;
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -121,17 +129,27 @@ fn main() {
                 }
                 Event::KeyDown { keycode: Some(key), .. } => match key {
                     Keycode::W | Keycode::S | Keycode::A | Keycode::D | Keycode::Q | Keycode::E => {
-                        camera.camera_translation(delta_time, key);
+                        camera.camera_translation(0.0016, key);
                     }
                     _ => {}
                 },
-                Event::MouseButtonDown { mouse_btn, x, y, .. } => {
-                    if mouse_btn == MouseButton::Left {
-                        camera.camera_rotation(delta_time, IVec2::new(x, y));
-                    }
-                }
+                //Event::MouseButtonDown { mouse_btn, x, y, .. } => {
+                //    if mouse_btn == MouseButton::Left {
+                //        camera.camera_rotation(delta_time, IVec2::new(x, y));
+                //    }
+                //}
                 _ => {}
             }
+        }
+
+        let mouse_state = event_pump.mouse_state();
+        if mouse_state.is_mouse_button_pressed(MouseButton::Left)
+            && mouse_state.x() != prev_mouse_x
+            && mouse_state.y() != prev_mouse_y
+        {
+            camera.camera_rotation(0.0016, IVec2::new(mouse_state.x(), mouse_state.y()));
+            prev_mouse_x = mouse_state.x();
+            prev_mouse_y = mouse_state.y();
         }
 
         camera.update_look_at();

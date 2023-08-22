@@ -6,27 +6,23 @@ use crate::world::scenegraph::Scenegraph;
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use sdl2::render::WindowCanvas;
 pub type RGBColor = Vec3;
+use crate::canvas::Canvas;
 use crate::math::ColorTypeFunctionality;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::surface::{Surface, SurfaceRef};
+
 use sdl2::sys::{
     SDL_GetWindowSurface, SDL_LockSurface, SDL_MapRGB, SDL_Surface, SDL_UnlockSurface,
     SDL_UpdateWindowSurface,
 };
 
 pub struct Renderer<'mm> {
-    sdl_window: &'mm mut WindowCanvas,
-    front_buffer: *mut SDL_Surface,
-    //front_buffer: sdl2::surface::Surface<'static>,
-    back_buffer: sdl2::surface::Surface<'static>,
-    back_buffer_pixels: *mut u32,
+    canvas: &'mm mut Canvas,
     ray: Ray,
     ray_hit_to_light: Ray,
     hit_record: HitRecord<'mm>,
     hit_record_shadow: HitRecord<'mm>,
     ray_ss_coords: Vec2,
-    width: u32,
-    height: u32,
     aspect_ratio: f32,
     max_bounces: u32,
     amount_bounces: u32,
@@ -34,20 +30,8 @@ pub struct Renderer<'mm> {
 }
 
 impl<'mm> Renderer<'mm> {
-    pub fn new(sdl_window: &'mm mut WindowCanvas) -> Self {
-        let width = sdl_window.window().size().0;
-        let height = sdl_window.window().size().1;
-        let aspect_ratio = width as f32 / height as f32;
-
-        //let screen_bits = PixelFormatEnum::ARGB8888.into_masks().unwrap();
-        //let front_buffer = Surface::from_pixelmasks(width, height, screen_bits).unwrap();
-        let front_buffer: *mut SDL_Surface =
-            unsafe { SDL_GetWindowSurface(sdl_window.window_mut().raw()) };
-
-        //let screen_bits = PixelFormatEnum::Index8.into_masks().unwrap();
-        let mut back_buffer = Surface::new(width, height, PixelFormatEnum::ABGR8888).unwrap();
-
-        let back_buffer_pixels = back_buffer.without_lock_mut().unwrap().as_mut_ptr() as *mut u32;
+    pub fn new(canvas: &'mm mut Canvas) -> Self {
+        let aspect_ratio = canvas.width as f32 / canvas.height as f32;
         let ray = Ray::new(Vec3::ZERO, Vec3::ZERO);
         let ray_hit_to_light = Ray::new(Vec3::ZERO, Vec3::ZERO);
         let hit_record = HitRecord::default();
@@ -57,17 +41,12 @@ impl<'mm> Renderer<'mm> {
         let amount_bounces = 0;
         let reflectiveness_env_mat_first_hit = 0.0;
         Self {
-            sdl_window,
-            front_buffer,
-            back_buffer,
-            back_buffer_pixels,
+            canvas,
             ray,
             ray_hit_to_light,
             hit_record,
             hit_record_shadow,
             ray_ss_coords,
-            width,
-            height,
             aspect_ratio,
             max_bounces,
             amount_bounces,
@@ -81,27 +60,22 @@ impl<'mm> Renderer<'mm> {
         camera: &Camera,
         lights: &Vec<Box<dyn Light>>,
     ) {
-        unsafe {
-            SDL_LockSurface(self.back_buffer.raw());
-        }
-
         let mut pixel: Vec4;
         let camera_look_at: &Mat4 = &camera.look_at;
         let scale_factor = camera.get_scale_factor();
-        //loop over all the pixels
 
-        for y in 0..self.height {
+        for y in 0..self.canvas.height {
             self.get_ray_world_coord_y(y, scale_factor);
 
-            for x in 0..self.width {
+            for x in 0..self.canvas.width {
                 self.ray.origin = camera.position;
                 self.amount_bounces = 0;
 
                 self.get_ray_world_coord_x(x, scale_factor);
 
-                pixel = Vec4::new(self.ray_ss_coords.x, self.ray_ss_coords.y, -1.0, 0.0);
+                pixel = Vec4::new(self.ray_ss_coords.x, self.ray_ss_coords.y, -1.0, 1.0);
 
-                pixel = camera_look_at.mul_vec4(pixel);
+                pixel = *camera_look_at * pixel;
 
                 self.ray.direction = (pixel.truncate() - self.ray.origin).normalize();
 
@@ -109,30 +83,37 @@ impl<'mm> Renderer<'mm> {
                     self.calculate_color(scenegraph, lights, self.amount_bounces);
 
                 final_color.max_to_one();
-                //println!("6");
-                #[allow(clippy::cast_precision_loss)]
+
+                //let rgb = Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
+
+                //let rgb = 65536 * ((1.0 * 255.0) as u32)
+                //    + 256 * ((0.0 * 255.0) as u32)
+                //    + ((0.0 * 255.0) as u32);
+
                 unsafe {
-                    *self.back_buffer_pixels.add((x + y * self.width) as usize) = SDL_MapRGB(
-                        self.back_buffer.pixel_format().raw(),
-                        (0.0 * 255.0) as u8,
-                        (0.0 * 255.0) as u8,
-                        (0.0 * 255.0) as u8,
+                    let front_buffer: *mut SDL_Surface =
+                        unsafe { SDL_GetWindowSurface(self.canvas.sdl_canvas.window_mut().raw()) };
+                    let test = (*front_buffer).format;
+                    let val = SDL_MapRGB(
+                        test,
+                        (final_color.x * 255.0) as u8,
+                        (final_color.y * 255.0) as u8,
+                        (final_color.z * 255.0) as u8,
                     );
+                    self.canvas.draw_pixel(x, y, val);
                 }
-                //println!("7");
             }
         }
-        unsafe {
-            SDL_UnlockSurface(self.back_buffer.raw());
-            self.back_buffer.blit(None, SurfaceRef::from_ll_mut(self.front_buffer), None).unwrap();
-            SDL_UpdateWindowSurface(self.sdl_window.window().raw());
-        }
-        //update_window
 
-        //self.sdl_window.set_draw_color(Color::RGB(0, 0, 0));
-        //self.sdl_window.clear();
-        //self.sdl_window.window_mut().
-        self.sdl_window.present();
+        self.canvas.flush();
+    }
+
+    fn to_u32_rgb(r: f32, g: f32, b: f32) -> u32 {
+        let ri = (r * 255.0) as u32;
+        let gi = (g * 255.0) as u32;
+        let bi = (b * 255.0) as u32;
+
+        (ri << 16) | (gi << 8) | bi
     }
 
     fn calculate_color(
@@ -150,8 +131,10 @@ impl<'mm> Renderer<'mm> {
         }
 
         if self.amount_bounces == 0 {
-            self.reflectiveness_env_mat_first_hit =
-                self.hit_record.material.unwrap().get_reflectiveness_environment();
+            self.reflectiveness_env_mat_first_hit = match self.hit_record.material {
+                Some(_) => self.hit_record.material.unwrap().get_reflectiveness_environment(),
+                None => return RGBColor::ZERO,
+            };
         }
 
         let mut lambert_cosine_law;
@@ -201,13 +184,14 @@ impl<'mm> Renderer<'mm> {
     }
 
     fn get_ray_world_coord_x(&mut self, x: u32, scale_factor: f32) {
-        self.ray_ss_coords.x = ((2.0 * ((x as f32 + 0.5) / self.width as f32)) - 1.0)
+        self.ray_ss_coords.x = ((2.0 * ((x as f32 + 0.5) / self.canvas.width as f32)) - 1.0)
             * self.aspect_ratio
             * scale_factor;
     }
 
     fn get_ray_world_coord_y(&mut self, y: u32, scale_factor: f32) {
-        self.ray_ss_coords.y = 1.0 - (2.0 * ((y as f32 + 0.5) / self.height as f32)) * scale_factor;
+        self.ray_ss_coords.y =
+            (1.0 - (2.0 * ((y as f32 + 0.5) / self.canvas.height as f32))) * scale_factor;
     }
 
     fn get_color_mode_according_to_render_mode(

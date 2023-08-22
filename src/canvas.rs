@@ -14,8 +14,8 @@ pub struct Canvas {
     creator: TextureCreator<sdl2::video::WindowContext>,
     texture: RefCell<Texture<'static>>,
     data: Vec<u32>,
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
 }
 impl Canvas {
     pub fn new(width: u32, height: u32) -> Result<Self, Error> {
