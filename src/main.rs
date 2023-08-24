@@ -72,7 +72,7 @@ fn print_key_mapping() {
 }
 
 fn main() {
-    let mut canvas = Canvas::new(640, 480).unwrap();
+    let mut canvas = Canvas::new(800, 600).unwrap();
     let mut event_pump = canvas.sdl_context.event_pump().unwrap();
 
     let mut frame_count = 0u32;
@@ -91,30 +91,41 @@ fn main() {
     let mut light_manager: LightManager = LightManager::new();
 
     light_manager.add_light(Box::new(PointLight::new(
-        LightProperties::new(Vec3::new(1.0, 1.0, 1.0), 100.0, true, LightType::Point),
+        LightProperties::new(Vec3::new(0.84, 0.8, 0.6), 100.0, true, LightType::Point),
         Vec3::new(-0.5, 5.5, 6.5),
     )));
 
-    //light_manager.add_light(Box::new(DirectionalLight::new(
-    //    LightProperties::new(Vec3::new(0.6, 0.35, 0.3), 100.0, true, LightType::Point),
-    //    Vec3::new(0.0, -1.0, 0.0),
-    //)));
+    light_manager.add_light(Box::new(PointLight::new(
+        LightProperties::new(Vec3::new(0.95, 0.65, 1.0), 100.0, true, LightType::Point),
+        Vec3::new(0.3, 3.0, 6.5),
+    )));
 
-    let grey = LambertianMaterial::new(RGBColor::new(0.5, 0.5, 0.5), 1.0, 0.0);
+    light_manager.add_light(Box::new(PointLight::new(
+        LightProperties::new(Vec3::new(0.55, 0.65, 1.0), 100.0, true, LightType::Point),
+        Vec3::new(-0.2, 8.0, -5.),
+    )));
+
+    light_manager.add_light(Box::new(DirectionalLight::new(
+        LightProperties::new(Vec3::new(0.6, 0.35, 0.3), 0.8, true, LightType::Directional),
+        Vec3::new(0.0, -1.0, 0.0),
+    )));
+
     let mut scene: Scenegraph<'_> = Scenegraph::new();
 
+    let grey = material_manager.get_material("lambert_Grey_RE0").unwrap();
+
     scene.add_object(Box::new(Sphere::new(
-        ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), &grey),
+        ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), grey),
         1.0,
     )));
 
     scene.add_object(Box::new(Plane::new(
-        ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), &grey),
+        ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), grey),
         Vec3::new(0.0, 1.0, 0.0),
     )));
 
     scene.add_object(Box::new(Plane::new(
-        ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), &grey),
+        ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), grey),
         Vec3::new(0.0, 0.0, 1.0),
     )));
 
@@ -133,11 +144,6 @@ fn main() {
                     }
                     _ => {}
                 },
-                //Event::MouseButtonDown { mouse_btn, x, y, .. } => {
-                //    if mouse_btn == MouseButton::Left {
-                //        camera.camera_rotation(delta_time, IVec2::new(x, y));
-                //    }
-                //}
                 _ => {}
             }
         }

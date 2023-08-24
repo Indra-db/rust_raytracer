@@ -17,7 +17,7 @@ pub fn phong(
     normal: &Vec3,
 ) -> RGBColor {
     let reflect: Vec3 = -*light_direction + 2.0 * normal.dot(*light_direction) * *normal;
-    let cos_angle = reflect.normalize().dot(*view_direction);
+    let cos_angle = reflect.dot(*view_direction);
 
     if cos_angle > 0.0 {
         let phong_specular_reflection =

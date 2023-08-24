@@ -22,7 +22,7 @@ impl Canvas {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
         let window = video_subsystem
-            .window("Raytracing in Rust", 800, 600)
+            .window("Raytracing in Rust", width, height)
             .position_centered()
             .opengl()
             .build()?;
@@ -31,7 +31,7 @@ impl Canvas {
         sdl_canvas.clear();
         sdl_canvas.present();
         let creator = sdl_canvas.texture_creator();
-        let texture = creator.create_texture_target(PixelFormatEnum::RGBA8888, width, height)?;
+        let texture = creator.create_texture_target(PixelFormatEnum::BGRA32, width, height)?;
 
         let texture = unsafe { std::mem::transmute::<_, Texture<'static>>(texture) };
 

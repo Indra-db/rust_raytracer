@@ -97,7 +97,7 @@ impl Camera {
         let rotation_y =
             Mat4::from_rotation_x((-mouse_position.y as f32).to_radians() * delta_time);
 
-        self.forward_vector = 1.0 * rotation_x * self.forward_vector;
+        self.forward_vector = rotation_y * rotation_x * self.forward_vector;
         self.update_look_at = true;
     }
 

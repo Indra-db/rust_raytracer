@@ -11,11 +11,6 @@ use crate::math::ColorTypeFunctionality;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::surface::{Surface, SurfaceRef};
 
-use sdl2::sys::{
-    SDL_GetWindowSurface, SDL_LockSurface, SDL_MapRGB, SDL_Surface, SDL_UnlockSurface,
-    SDL_UpdateWindowSurface,
-};
-
 pub struct Renderer<'mm> {
     canvas: &'mm mut Canvas,
     ray: Ray,
@@ -84,24 +79,9 @@ impl<'mm> Renderer<'mm> {
 
                 final_color.max_to_one();
 
-                //let rgb = Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
+                let final_color = Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
 
-                //let rgb = 65536 * ((1.0 * 255.0) as u32)
-                //    + 256 * ((0.0 * 255.0) as u32)
-                //    + ((0.0 * 255.0) as u32);
-
-                unsafe {
-                    let front_buffer: *mut SDL_Surface =
-                        unsafe { SDL_GetWindowSurface(self.canvas.sdl_canvas.window_mut().raw()) };
-                    let test = (*front_buffer).format;
-                    let val = SDL_MapRGB(
-                        test,
-                        (final_color.x * 255.0) as u8,
-                        (final_color.y * 255.0) as u8,
-                        (final_color.z * 255.0) as u8,
-                    );
-                    self.canvas.draw_pixel(x, y, val);
-                }
+                self.canvas.draw_pixel(x, y, final_color);
             }
         }
 
@@ -124,9 +104,11 @@ impl<'mm> Renderer<'mm> {
     ) -> RGBColor {
         let mut color = RGBColor::ZERO;
 
-        if !scenegraph.hit(&mut self.ray, &mut self.hit_record, false)
-            || self.amount_bounces >= self.max_bounces
-        {
+        if current_amount_bounces >= self.max_bounces {
+            return color;
+        }
+
+        if !scenegraph.hit(&mut self.ray, &mut self.hit_record, false) {
             return color;
         }
 
@@ -137,9 +119,10 @@ impl<'mm> Renderer<'mm> {
             };
         }
 
-        let mut lambert_cosine_law;
+        let mut lambert_cosine_law = 1.0;
+        let offset = 0.0001;
 
-        self.ray_hit_to_light.origin = self.hit_record.hitpoint;
+        self.ray_hit_to_light.origin = self.hit_record.hitpoint + (self.hit_record.normal * offset);
 
         for light in lights {
             if !light.is_light_enabled() {
@@ -153,11 +136,15 @@ impl<'mm> Renderer<'mm> {
                 &mut direction_magnitude_returned,
             );
 
+            //self.ray_hit_to_light.t_min = 0.0; -> fucks everything up
             self.ray_hit_to_light.t_max = direction_magnitude_returned;
 
-            scenegraph.hit(&mut self.ray_hit_to_light, &mut self.hit_record_shadow, true);
+            if scenegraph.hit(&mut self.ray_hit_to_light, &mut self.hit_record_shadow, true) {
+                continue;
+            }
 
-            lambert_cosine_law = self.hit_record.normal.dot(self.ray_hit_to_light.direction);
+            lambert_cosine_law =
+                self.hit_record.normal.dot(light.get_direction(&self.hit_record.hitpoint));
 
             if lambert_cosine_law < 0.0 {
                 continue;
@@ -167,6 +154,7 @@ impl<'mm> Renderer<'mm> {
                 self.get_color_mode_according_to_render_mode(light.as_ref(), lambert_cosine_law);
         }
 
+        color = color / lights.len() as f32;
         if self.hit_record.material.unwrap().get_reflectiveness_environment().eq(&0.0) {
             return color;
         } else {
@@ -177,7 +165,8 @@ impl<'mm> Renderer<'mm> {
             self.ray.origin = self.hit_record.hitpoint;
 
             color += self.calculate_color(scenegraph, lights, current_amount_bounces + 1)
-                * self.reflectiveness_env_mat_first_hit;
+                * self.reflectiveness_env_mat_first_hit
+                * lambert_cosine_law;
         }
 
         color

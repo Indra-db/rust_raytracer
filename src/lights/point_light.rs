@@ -16,8 +16,8 @@ impl PointLight {
 
 impl Light for PointLight {
     fn get_bi_radians(&self, position: &Vec3) -> RGBColor {
-        let direction_sq = self.position.distance_squared(*position);
-        self.light_properties.color * self.light_properties.intensity / direction_sq
+        let direction_sq = position.distance_squared(self.position);
+        self.light_properties.color * (self.light_properties.intensity / direction_sq)
     }
 
     fn get_direction(&self, position: &Vec3) -> Vec3 {
@@ -25,9 +25,14 @@ impl Light for PointLight {
     }
 
     fn get_direction_magnitude(&self, position: &Vec3, direction_magnitude: &mut f32) -> Vec3 {
-        let normalized_direction = (self.position - *position).normalize();
+        let mut normalized_direction = self.position - *position;
         *direction_magnitude = normalized_direction.length();
-        normalized_direction
+        if (*direction_magnitude).eq(&0.0) {
+            return Vec3::ZERO.normalize();
+        }
+        let inv_direction_magnitude = 1.0 / *direction_magnitude;
+        normalized_direction *= inv_direction_magnitude;
+        normalized_direction.normalize()
     }
 
     fn get_position(&self) -> &Vec3 {
