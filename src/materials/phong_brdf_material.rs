@@ -10,6 +10,24 @@ pub struct PhongBRDF {
     pub is_metal: bool,
 }
 
+impl PhongBRDF {
+    pub const fn new(
+        albedo: RGBColor,
+        roughness: f32,
+        is_metal: bool,
+        diffuse_reflectance: f32,
+        reflectiveness_environment: f32,
+    ) -> Self {
+        let properties = if is_metal {
+            MaterialProperties::new(RGBColor::ZERO, diffuse_reflectance, reflectiveness_environment)
+        } else {
+            MaterialProperties::new(albedo, diffuse_reflectance, reflectiveness_environment)
+        };
+
+        Self { properties, albedo, roughness, is_metal }
+    }
+}
+
 impl Material for PhongBRDF {
     #[allow(clippy::cast_precision_loss)]
     fn shade(

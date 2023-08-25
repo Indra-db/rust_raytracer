@@ -72,14 +72,20 @@ fn print_key_mapping() {
 }
 
 fn main() {
-    let mut canvas = Canvas::new(800, 600).unwrap();
+    let width = 800;
+    let height = 600;
+    let mut canvas = Canvas::new(width, height).unwrap();
     let mut event_pump = canvas.sdl_context.event_pump().unwrap();
 
     let mut frame_count = 0u32;
     let mut last_fps_time;
+    let mut previous_time;
+
     unsafe {
         last_fps_time = sdl2::sys::SDL_GetPerformanceCounter();
     }
+
+    previous_time = last_fps_time;
 
     let mut camera = camera::Camera::new(Vec3::new(0.0, 2.0, 15.0), 45.0);
 
@@ -87,6 +93,13 @@ fn main() {
 
     let mut material_manager: MaterialManager<'_> = MaterialManager::new();
     material_manager.add_lambert_material("Grey", 0);
+    material_manager.add_lambert_phong_material("Grey", 0);
+    material_manager.add_phong_brdf_material(
+        "Silver",
+        true,
+        material_manager::RoughnessConstants::Smooth,
+        0,
+    );
 
     let mut light_manager: LightManager = LightManager::new();
 
@@ -112,20 +125,26 @@ fn main() {
 
     let mut scene: Scenegraph<'_> = Scenegraph::new();
 
-    let grey = material_manager.get_material("lambert_Grey_RE0").unwrap();
+    let grey_01 = material_manager.get_material("lambert_Grey_RE0").unwrap();
+    let silver = material_manager.get_material("phong_brdf_Silver_Metal_Smooth").unwrap();
 
     scene.add_object(Box::new(Sphere::new(
-        ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), grey),
+        ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), grey_01),
+        1.0,
+    )));
+
+    scene.add_object(Box::new(Sphere::new(
+        ObjectProperties::new(Vec3::new(1.0, 4.0, 0.0), silver),
         1.0,
     )));
 
     scene.add_object(Box::new(Plane::new(
-        ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), grey),
+        ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), grey_01),
         Vec3::new(0.0, 1.0, 0.0),
     )));
 
     scene.add_object(Box::new(Plane::new(
-        ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), grey),
+        ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), grey_01),
         Vec3::new(0.0, 0.0, 1.0),
     )));
 
@@ -140,7 +159,7 @@ fn main() {
                 }
                 Event::KeyDown { keycode: Some(key), .. } => match key {
                     Keycode::W | Keycode::S | Keycode::A | Keycode::D | Keycode::Q | Keycode::E => {
-                        camera.camera_translation(0.0016, key);
+                        camera.camera_translation(delta_time, key);
                     }
                     _ => {}
                 },
@@ -148,14 +167,15 @@ fn main() {
             }
         }
 
-        let mouse_state = event_pump.mouse_state();
+        let mouse_state = event_pump.relative_mouse_state();
+        let (mouse_x, mouse_y) = (mouse_state.x(), mouse_state.y());
         if mouse_state.is_mouse_button_pressed(MouseButton::Left)
-            && mouse_state.x() != prev_mouse_x
-            && mouse_state.y() != prev_mouse_y
+            && mouse_x != prev_mouse_x
+            && mouse_y != prev_mouse_y
         {
-            camera.camera_rotation(0.0016, IVec2::new(mouse_state.x(), mouse_state.y()));
-            prev_mouse_x = mouse_state.x();
-            prev_mouse_y = mouse_state.y();
+            camera.camera_rotation(delta_time, IVec2::new(mouse_x, mouse_y));
+            prev_mouse_x = mouse_x;
+            prev_mouse_y = mouse_y;
         }
 
         camera.update_look_at();
@@ -165,12 +185,16 @@ fn main() {
         render_system.render(&scene, &camera, light_manager.get_lights());
 
         frame_count += 1;
+
+        #[allow(clippy::cast_precision_loss)]
         unsafe {
             let current_time = sdl2::sys::SDL_GetPerformanceCounter();
-            #[allow(clippy::cast_precision_loss)]
+            delta_time = (current_time - previous_time) as f32
+                / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
+            previous_time = current_time;
             let elapsed_seconds = (current_time - last_fps_time) as f32
                 / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
-            delta_time = elapsed_seconds;
+
             if elapsed_seconds >= 1.0 {
                 println!("FPS: {frame_count}");
                 frame_count = 0;

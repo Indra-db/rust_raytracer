@@ -1,11 +1,13 @@
 use super::lambert_material::LambertianMaterial;
+use super::lambert_phong_material::LambertPhongMaterial;
 use super::material_definitions::{
     create_diffuse_rgb_hash_map, create_linear_fresnel_hash_map, RGBColor,
 };
-use super::material_properties::Material;
+use super::material_properties::{Material, MaterialProperties};
+use super::phong_brdf_material::PhongBRDF;
 use std::collections::HashMap;
 
-enum RoughnessConstants {
+pub enum RoughnessConstants {
     Smooth,
     HalfRough,
     Rough,
@@ -19,6 +21,13 @@ impl RoughnessConstants {
             RoughnessConstants::Rough => 1.0,
         }
     }
+    fn string(&self) -> &str {
+        match *self {
+            RoughnessConstants::Smooth => "Smooth",
+            RoughnessConstants::HalfRough => "HalfRough",
+            RoughnessConstants::Rough => "Rough",
+        }
+    }
 }
 
 pub struct MaterialManager<'a> {
@@ -30,7 +39,7 @@ pub struct MaterialManager<'a> {
 impl<'a> MaterialManager<'a> {
     const DIFFUSE_REFLECTANCE: f32 = 1.0;
     const SPECULAR_REFLECTANCE: f32 = 1.0;
-    const PHONG_EXPONENT: f32 = 60.0;
+    const PHONG_EXPONENT: i32 = 60;
 
     pub fn new() -> Self {
         MaterialManager {
@@ -70,6 +79,81 @@ impl<'a> MaterialManager<'a> {
             diffuse_color,
             Self::DIFFUSE_REFLECTANCE,
             reflectiveness,
+        ));
+
+        self.add_material(material_id, new_material);
+    }
+
+    pub fn add_lambert_phong_material(&mut self, color_name: &str, reflectiveness: i32) {
+        let material_id: String = format!("lambert_phong_{}_RE{}", color_name, reflectiveness);
+
+        if self.materials.contains_key(&material_id) {
+            return;
+        }
+
+        let diffuse_color = match self.diffuse_colors.get(color_name) {
+            Some(color) => *color / 255.0,
+            None => {
+                println!("Color {} not found", color_name);
+                return;
+            }
+        };
+
+        let reflectiveness = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
+        let new_material = Box::new(LambertPhongMaterial::new(
+            MaterialProperties::new(diffuse_color, Self::DIFFUSE_REFLECTANCE, reflectiveness),
+            Self::SPECULAR_REFLECTANCE,
+            Self::PHONG_EXPONENT,
+        ));
+
+        self.add_material(material_id, new_material);
+    }
+
+    pub fn add_phong_brdf_material(
+        &mut self,
+        albedo: &str,
+        is_metalness: bool,
+        roughness: RoughnessConstants,
+        reflectiveness: i32,
+    ) {
+        let type_material = if is_metalness { "Metal" } else { "Dielectric" };
+
+        let mut material_id: String =
+            format!("phong_brdf_{}_{}_{}", albedo, type_material, roughness.string());
+
+        if !is_metalness {
+            material_id = format!("{}_RE{}", material_id, reflectiveness);
+        }
+
+        if self.materials.contains_key(&material_id) {
+            return;
+        }
+
+        let fresnel_value = if is_metalness {
+            match self.linear_freshnel.get(albedo) {
+                Some(color) => *color,
+                None => {
+                    println!("Color {} not found", albedo);
+                    return;
+                }
+            }
+        } else {
+            match self.diffuse_colors.get(albedo) {
+                Some(color) => *color / 255.0,
+                None => {
+                    println!("Color {} not found", albedo);
+                    return;
+                }
+            }
+        };
+        let roughness_value = roughness.value();
+        let reflectiveness_value = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
+        let new_material = Box::new(PhongBRDF::new(
+            fresnel_value,
+            roughness_value,
+            is_metalness,
+            Self::DIFFUSE_REFLECTANCE,
+            reflectiveness_value,
         ));
 
         self.add_material(material_id, new_material);

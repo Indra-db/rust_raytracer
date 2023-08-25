@@ -24,7 +24,7 @@ impl Camera {
             up_vector: Vec4::default(),
             position,
             fov,
-            speed: 400.0,
+            speed: 15.0,
             scale_factor: (fov.to_radians() / 2.0).tan(),
             update_look_at: true,
         };
@@ -92,26 +92,28 @@ impl Camera {
 
     #[allow(clippy::cast_precision_loss)]
     pub fn camera_rotation(&mut self, delta_time: f32, mouse_position: IVec2) {
-        let rotation_x =
-            Mat4::from_rotation_y((-mouse_position.x as f32).to_radians() * delta_time);
-        let rotation_y =
-            Mat4::from_rotation_x((-mouse_position.y as f32).to_radians() * delta_time);
+        const ROTATION_SENSIVITY: f32 = 0.035;
 
-        self.forward_vector = rotation_y * rotation_x * self.forward_vector;
+        self.pitch(-mouse_position.y as f32 * ROTATION_SENSIVITY);
+        self.yaw(-mouse_position.x as f32 * ROTATION_SENSIVITY);
+        self.update_look_at = true;
+    }
+
+    fn pitch(&mut self, angle: f32) {
+        let rotation = Mat4::from_axis_angle(self.right_vector.truncate(), angle.to_radians());
+        self.forward_vector = rotation.transpose().inverse() * self.forward_vector;
+        self.forward_vector = rotation * self.forward_vector;
+        self.update_look_at = true;
+    }
+
+    fn yaw(&mut self, angle: f32) {
+        let rotation = Mat4::from_axis_angle(self.up_vector.truncate(), angle.to_radians());
+        self.forward_vector = rotation.transpose().inverse() * self.forward_vector;
+        self.forward_vector = rotation * self.forward_vector;
         self.update_look_at = true;
     }
 
     fn calculate_look_at(&mut self) {
-        //self.right_vector =
-        //    self.forward_vector.truncate().cross(Self::WORLD_UP_VECTOR).normalize().extend(0.0);
-        //
-        //self.up_vector = self
-        //    .right_vector
-        //    .truncate()
-        //    .cross(self.forward_vector.truncate())
-        //    .normalize()
-        //    .extend(0.0);
-
         self.right_vector =
             Self::WORLD_UP_VECTOR.cross(self.forward_vector.truncate()).normalize().extend(0.0);
 

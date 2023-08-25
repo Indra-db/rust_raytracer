@@ -20,6 +20,7 @@ pub struct Canvas {
 impl Canvas {
     pub fn new(width: u32, height: u32) -> Result<Self, Error> {
         let sdl_context = sdl2::init()?;
+        sdl_context.mouse().set_relative_mouse_mode(true);
         let video_subsystem = sdl_context.video()?;
         let window = video_subsystem
             .window("Raytracing in Rust", width, height)

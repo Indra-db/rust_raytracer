@@ -9,6 +9,15 @@ pub struct LambertPhongMaterial {
     pub phong_exponent: i32,
 }
 
+impl LambertPhongMaterial {
+    pub const fn new(
+        properties: MaterialProperties,
+        specular_reflectance: f32,
+        phong_exponent: i32,
+    ) -> Self {
+        Self { properties, specular_reflectance, phong_exponent }
+    }
+}
 impl<'mm> Material for LambertPhongMaterial {
     fn shade(
         &self,
