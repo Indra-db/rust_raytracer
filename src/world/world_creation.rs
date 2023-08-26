@@ -12,6 +12,7 @@ use crate::{
         plane::Plane,
         sphere::Sphere,
         triangle::{CullMode, Triangle},
+        triangle_mesh::TriangleMesh,
     },
 };
 
@@ -37,10 +38,12 @@ pub fn create_materials(material_manager: &mut MaterialManager<'_>) {
     material_manager.add_phong_brdf_metal_material("Gold", RoughnessConstants::Smooth);
     material_manager.add_phong_brdf_metal_material("Gold", RoughnessConstants::HalfRough);
     material_manager.add_phong_brdf_metal_material("Gold", RoughnessConstants::Rough);
-    material_manager.add_phong_brdf_metal_material("Copper", RoughnessConstants::Smooth);
+    material_manager.add_phong_brdf_metal_material("Copper", RoughnessConstants::HalfRough);
+    material_manager.add_phong_brdf_metal_material("Chrome", RoughnessConstants::HalfRough);
 
     // dielectrics
     material_manager.add_phong_brdf_dielectric_material("HotPink", RoughnessConstants::Smooth, 5);
+    material_manager.add_phong_brdf_dielectric_material("LawnGreen", RoughnessConstants::Smooth, 5);
     material_manager.add_phong_brdf_dielectric_material("SkyBlue", RoughnessConstants::Smooth, 5);
     material_manager.add_phong_brdf_dielectric_material("SkyBlue", RoughnessConstants::HalfRough, 3);
     material_manager.add_phong_brdf_dielectric_material("SkyBlue", RoughnessConstants::Rough, 2);
@@ -81,22 +84,46 @@ pub fn create_scene_01<'a>(scene_manager: &mut SceneManager<'a>, material_manage
     let grey = material_manager.get_material("lambert_Grey_RE2").unwrap();
     let blue = material_manager.get_material("lambert_Blue_RE2").unwrap();
     let silver = material_manager.get_material("phong_brdf_Silver_metal_HalfRough").unwrap();
+    let chrome = material_manager.get_material("phong_brdf_Copper_metal_HalfRough").unwrap();
+    let gold = material_manager.get_material("phong_brdf_Gold_metal_HalfRough").unwrap();
     let silver_smooth = material_manager.get_material("phong_brdf_Silver_metal_Smooth").unwrap();
-
+    let hot_pink_smooth = material_manager.get_material("phong_brdf_HotPink_dielectric_Smooth_RE5").unwrap();
+    let light_cyan_smooth = material_manager.get_material("phong_brdf_LawnGreen_dielectric_Smooth_RE5").unwrap();
     scene.add_object(Box::new(Sphere::new(ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), silver_smooth), 1.0)));
 
     scene.add_object(Box::new(Sphere::new(ObjectProperties::new(Vec3::new(1.0, 4.0, 0.0), silver), 1.0)));
+
+    scene.add_object(Box::new(Sphere::new(ObjectProperties::new(Vec3::new(1.0, 1.0, 0.0), hot_pink_smooth), 1.0)));
+    scene.add_object(Box::new(Sphere::new(ObjectProperties::new(Vec3::new(3.0, 1.0, 0.0), light_cyan_smooth), 1.0)));
+    scene.add_object(Box::new(Sphere::new(ObjectProperties::new(Vec3::new(3.0, 4.0, 0.0), chrome), 1.0)));
+    scene.add_object(Box::new(Sphere::new(ObjectProperties::new(Vec3::new(-1.0, 1.0, 0.0), gold), 1.0)));
 
     scene.add_object(Box::new(Plane::new(ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), grey), Vec3::new(0.0, 1.0, 0.0))));
 
     scene.add_object(Box::new(Plane::new(ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), grey), Vec3::new(0.0, 0.0, 1.0))));
 
     scene.add_object(Box::new(Triangle::new(
-        ObjectProperties::new(Vec3::new(-2.5, 6.0, 0.0), blue),
+        ObjectProperties::new(Vec3::new(-2.5, 6.0, 0.0), hot_pink_smooth),
         [Vec3::new(-0.75, 1.5, 0.0), Vec3::new(-0.75, 0.0, 0.0), Vec3::new(0.75, 0.0, 0.0)],
         CullMode::None,
     )));
 
+    scene.add_object(Box::new(Triangle::new(
+        ObjectProperties::new(Vec3::new(2.0, 6.0, 0.0), light_cyan_smooth),
+        [Vec3::new(-0.75, 1.5, 0.0), Vec3::new(-0.75, 0.0, 0.0), Vec3::new(0.75, 0.0, 0.0)],
+        CullMode::None,
+    )));
+
+    scene.add_object(Box::new(TriangleMesh::new_from_obj(
+        ObjectProperties::new(Vec3::new(6.0, 0.0, 0.0), gold),
+        "lowpoly_bunny",
+        CullMode::BackFace,
+    )));
+    scene.add_object(Box::new(TriangleMesh::new_from_obj(
+        ObjectProperties::new(Vec3::new(-4.0, 0.0, 0.0), light_cyan_smooth),
+        "lowpoly_bunny",
+        CullMode::BackFace,
+    )));
     scene_manager.add_scene(scene);
 }
 

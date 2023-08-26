@@ -33,7 +33,7 @@ impl<'mm> Renderer<'mm> {
         let hit_record = HitRecord::default();
         let hit_record_shadow = HitRecord::default();
         let ray_ss_coords = Vec2::ZERO;
-        let max_bounces = 6;
+        let max_bounces = 2;
         let reflectiveness_env_mat_first_hit = 0.0;
         Self {
             canvas,
@@ -90,7 +90,12 @@ impl<'mm> Renderer<'mm> {
         (ri << 16) | (gi << 8) | bi
     }
 
-    fn calculate_color(&mut self, scenegraph: &Scenegraph<'mm>, lights: &Vec<Box<dyn Light>>, current_amount_bounces: u32) -> RGBColor {
+    fn calculate_color(
+        &mut self,
+        scenegraph: &Scenegraph<'mm>,
+        lights: &Vec<Box<dyn Light>>,
+        current_amount_bounces: u32,
+    ) -> RGBColor {
         let mut color = RGBColor::ZERO;
 
         if current_amount_bounces >= self.max_bounces {
