@@ -4,6 +4,7 @@ use crate::ray::Ray;
 use glam::Vec3;
 use std::rc::Rc;
 
+#[derive(Clone)]
 pub struct ObjectProperties<'mm> {
     pub position: Vec3,
     pub material: &'mm dyn Material,
