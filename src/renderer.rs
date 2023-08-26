@@ -20,8 +20,9 @@ pub struct Renderer<'mm> {
     ray_ss_coords: Vec2,
     aspect_ratio: f32,
     max_bounces: u32,
-    amount_bounces: u32,
     reflectiveness_env_mat_first_hit: f32,
+    pub are_hard_shadows_enabled: bool,
+    pub render_mode: u8,
 }
 
 impl<'mm> Renderer<'mm> {
@@ -32,8 +33,7 @@ impl<'mm> Renderer<'mm> {
         let hit_record = HitRecord::default();
         let hit_record_shadow = HitRecord::default();
         let ray_ss_coords = Vec2::ZERO;
-        let max_bounces = 4;
-        let amount_bounces = 0;
+        let max_bounces = 6;
         let reflectiveness_env_mat_first_hit = 0.0;
         Self {
             canvas,
@@ -44,17 +44,13 @@ impl<'mm> Renderer<'mm> {
             ray_ss_coords,
             aspect_ratio,
             max_bounces,
-            amount_bounces,
             reflectiveness_env_mat_first_hit,
+            are_hard_shadows_enabled: true,
+            render_mode: 0,
         }
     }
 
-    pub fn render(
-        &mut self,
-        scenegraph: &Scenegraph<'mm>,
-        camera: &Camera,
-        lights: &Vec<Box<dyn Light>>,
-    ) {
+    pub fn render(&mut self, scenegraph: &Scenegraph<'mm>, camera: &Camera, lights: &Vec<Box<dyn Light>>) {
         let mut pixel: Vec4;
         let camera_look_at: &Mat4 = &camera.look_at;
         let scale_factor = camera.get_scale_factor();
@@ -64,7 +60,6 @@ impl<'mm> Renderer<'mm> {
 
             for x in 0..self.canvas.width {
                 self.ray.origin = camera.position;
-                self.amount_bounces = 0;
 
                 self.get_ray_world_coord_x(x, scale_factor);
 
@@ -74,8 +69,7 @@ impl<'mm> Renderer<'mm> {
 
                 self.ray.direction = (pixel.truncate() - self.ray.origin).normalize();
 
-                let mut final_color: RGBColor =
-                    self.calculate_color(scenegraph, lights, self.amount_bounces);
+                let mut final_color: RGBColor = self.calculate_color(scenegraph, lights, 0);
 
                 final_color.max_to_one();
 
@@ -96,12 +90,7 @@ impl<'mm> Renderer<'mm> {
         (ri << 16) | (gi << 8) | bi
     }
 
-    fn calculate_color(
-        &mut self,
-        scenegraph: &Scenegraph<'mm>,
-        lights: &Vec<Box<dyn Light>>,
-        current_amount_bounces: u32,
-    ) -> RGBColor {
+    fn calculate_color(&mut self, scenegraph: &Scenegraph<'mm>, lights: &Vec<Box<dyn Light>>, current_amount_bounces: u32) -> RGBColor {
         let mut color = RGBColor::ZERO;
 
         if current_amount_bounces >= self.max_bounces {
@@ -112,14 +101,14 @@ impl<'mm> Renderer<'mm> {
             return color;
         }
 
-        if self.amount_bounces == 0 {
+        if current_amount_bounces == 0 {
             self.reflectiveness_env_mat_first_hit = match self.hit_record.material {
                 Some(_) => self.hit_record.material.unwrap().get_reflectiveness_environment(),
                 None => return RGBColor::ZERO,
             };
         }
 
-        let mut lambert_cosine_law = 1.0;
+        let mut lambert_cosine_law;
         let offset = 0.0001;
 
         self.ray_hit_to_light.origin = self.hit_record.hitpoint + (self.hit_record.normal * offset);
@@ -129,37 +118,36 @@ impl<'mm> Renderer<'mm> {
                 continue;
             }
 
-            let mut direction_magnitude_returned = 0.0;
+            if self.are_hard_shadows_enabled {
+                let mut direction_magnitude_returned = 0.0;
 
-            self.ray_hit_to_light.direction = light.get_direction_magnitude(
-                &self.hit_record.hitpoint,
-                &mut direction_magnitude_returned,
-            );
+                self.ray_hit_to_light.direction =
+                    light.get_direction_magnitude(&self.hit_record.hitpoint, &mut direction_magnitude_returned);
 
-            //self.ray_hit_to_light.t_min = 0.0; -> fucks everything up
-            self.ray_hit_to_light.t_max = direction_magnitude_returned;
+                self.ray_hit_to_light.t_min = 0.0001; //-> f32::EPSILON is too low.
+                self.ray_hit_to_light.t_max = direction_magnitude_returned;
 
-            if scenegraph.hit(&mut self.ray_hit_to_light, &mut self.hit_record_shadow, true) {
-                continue;
+                if scenegraph.hit(&mut self.ray_hit_to_light, &mut self.hit_record_shadow, true) {
+                    continue;
+                }
             }
 
-            lambert_cosine_law =
-                self.hit_record.normal.dot(light.get_direction(&self.hit_record.hitpoint));
+            lambert_cosine_law = self.hit_record.normal.dot(light.get_direction(&self.hit_record.hitpoint));
 
             if lambert_cosine_law < 0.0 {
                 continue;
             }
 
-            color +=
-                self.get_color_mode_according_to_render_mode(light.as_ref(), lambert_cosine_law);
+            color += self.get_color_mode_according_to_render_mode(light.as_ref(), lambert_cosine_law);
         }
 
-        color = color / lights.len() as f32;
+        //color = color / lights.len() as f32; //this currently makes everything too dark
+
         if self.hit_record.material.unwrap().get_reflectiveness_environment().eq(&0.0) {
             return color;
         } else {
-            let reflect = self.ray.direction
-                - self.hit_record.normal * (self.ray.direction.dot(self.hit_record.normal) * 2.0);
+            let reflect = self.ray.direction - self.hit_record.normal * (self.ray.direction.dot(self.hit_record.normal) * 2.0);
+            lambert_cosine_law = self.hit_record.normal.dot(reflect);
 
             self.ray.direction = reflect.normalize();
             self.ray.origin = self.hit_record.hitpoint;
@@ -173,37 +161,57 @@ impl<'mm> Renderer<'mm> {
     }
 
     fn get_ray_world_coord_x(&mut self, x: u32, scale_factor: f32) {
-        self.ray_ss_coords.x = ((2.0 * ((x as f32 + 0.5) / self.canvas.width as f32)) - 1.0)
-            * self.aspect_ratio
-            * scale_factor;
+        self.ray_ss_coords.x = ((2.0 * ((x as f32 + 0.5) / self.canvas.width as f32)) - 1.0) * self.aspect_ratio * scale_factor;
     }
 
     fn get_ray_world_coord_y(&mut self, y: u32, scale_factor: f32) {
-        self.ray_ss_coords.y =
-            (1.0 - (2.0 * ((y as f32 + 0.5) / self.canvas.height as f32))) * scale_factor;
+        self.ray_ss_coords.y = (1.0 - (2.0 * ((y as f32 + 0.5) / self.canvas.height as f32))) * scale_factor;
     }
 
-    fn get_color_mode_according_to_render_mode(
-        &self,
-        light: &dyn Light,
-        lambert_cosine_law: f32,
-    ) -> RGBColor {
-        light.get_bi_radians(&self.hit_record.hitpoint)
-            * lambert_cosine_law
-            * self.hit_record.material.unwrap().shade(
-                &self.hit_record,
-                &light.get_direction(&self.hit_record.hitpoint),
-                &self.ray.direction,
-            )
-
-        //todo!("not fully implemented yet for different render modes");
+    fn get_color_mode_according_to_render_mode(&self, light: &dyn Light, lambert_cosine_law: f32) -> RGBColor {
+        match self.render_mode {
+            0 => {
+                light.get_bi_radians(&self.hit_record.hitpoint)
+                    * lambert_cosine_law
+                    * self.hit_record.material.unwrap().shade(
+                        &self.hit_record,
+                        &light.get_direction(&self.hit_record.hitpoint),
+                        &(-1.0 * self.ray.direction),
+                    )
+            }
+            1 => light.get_bi_radians(&self.hit_record.hitpoint) * lambert_cosine_law,
+            2 => {
+                lambert_cosine_law
+                    * self.hit_record.material.unwrap().shade(
+                        &self.hit_record,
+                        &light.get_direction(&self.hit_record.hitpoint),
+                        &(-1.0 * self.ray.direction),
+                    )
+            }
+            _ => RGBColor::ZERO,
+        }
     }
 
-    fn change_max_bounce_rays(&mut self) {
+    pub fn toggle_max_bounce_rays(&mut self) {
         self.max_bounces += 1;
-        if self.max_bounces > 4 {
+        if self.max_bounces > 6 {
             self.max_bounces = 1;
         }
         println!("\n\n current max bounces: {}", self.max_bounces);
+    }
+
+    pub fn toggle_shadows(&mut self) {
+        self.are_hard_shadows_enabled = !self.are_hard_shadows_enabled;
+    }
+
+    pub fn toggle_render_mode(&mut self) {
+        self.render_mode += 1;
+
+        match self.render_mode {
+            0 => println!("Render mode: all"),
+            1 => println!("Render mode: biradiance"),
+            2 => println!("Render mode: BRDF"),
+            _ => self.render_mode = 0,
+        }
     }
 }
