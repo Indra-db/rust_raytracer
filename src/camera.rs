@@ -91,7 +91,7 @@ impl Camera {
     }
 
     #[allow(clippy::cast_precision_loss)]
-    pub fn camera_rotation(&mut self, delta_time: f32, mouse_position: IVec2) {
+    pub fn camera_rotation(&mut self, _delta_time: f32, mouse_position: IVec2) {
         const ROTATION_SENSIVITY: f32 = 0.035;
 
         self.pitch(-mouse_position.y as f32 * ROTATION_SENSIVITY);

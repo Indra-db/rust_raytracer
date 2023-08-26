@@ -1,5 +1,5 @@
 # Set the maximum width for a single line.
-max_width = 100
+max_width = 140
 
 # Use visual indentation (align with the opening delimiter).
 use_small_heuristics = "Max"
