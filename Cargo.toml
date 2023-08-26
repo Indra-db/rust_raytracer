@@ -14,3 +14,4 @@ categories = ["graphics"]
 glam = "0.24.1"
 num-traits = "0.2.16"
 sdl2 = "0.35.2"
+regex = "1.9.4"
