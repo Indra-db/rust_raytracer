@@ -1,6 +1,7 @@
 # rust_raytracer
 
-my first rust project. The purpose of this project was learning rust.
-The raytracing code is not perfect, and it's not meant to be perfect, my only purpose is learning the rust language.
+This is my first project using the Rust programming language, focusing on raytracing.
+The raytracing code is not meant to be perfect, my main goal is to learn more about Rust.
 
-I'm planning on rewriting this code multiple times introducing different rust idioms. These rewrites will happen in branches of this repo.
+I plan to rewrite the code over time, trying other Rust techniques. 
+These updates will be available in separate branches of this repository.
