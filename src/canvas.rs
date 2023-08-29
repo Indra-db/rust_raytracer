@@ -1,21 +1,18 @@
 use sdl2::pixels::Color;
-use sdl2::{
-    event::Event, keyboard::Keycode, pixels::PixelFormatEnum, render::Texture,
-    render::TextureCreator,
-};
+use sdl2::{pixels::PixelFormatEnum, render::Texture, render::TextureCreator};
 use std::cell::RefCell;
-use std::{thread::sleep, time::Duration};
 
 type Error = Box<dyn std::error::Error>;
 
+#[allow(dead_code)]
 pub struct Canvas {
     pub sdl_context: sdl2::Sdl,
     pub sdl_canvas: sdl2::render::Canvas<sdl2::video::Window>,
     creator: TextureCreator<sdl2::video::WindowContext>,
     texture: RefCell<Texture<'static>>,
-    data: Vec<u32>,
     pub width: u32,
     pub height: u32,
+    pub pixel_data: Vec<u32>,
 }
 impl Canvas {
     pub fn new(width: u32, height: u32) -> Result<Self, Error> {
@@ -36,26 +33,34 @@ impl Canvas {
 
         let texture = unsafe { std::mem::transmute::<_, Texture<'static>>(texture) };
 
-        Ok(Canvas {
+        Ok(Self {
             width,
             height,
-            data: vec![0; (width * height) as usize],
             sdl_canvas,
             sdl_context,
             creator,
             texture: RefCell::new(texture),
+            pixel_data: vec![0; (width * height) as usize],
         })
     }
+
     pub fn flush(&mut self) {
         let mut texture = self.texture.borrow_mut();
         texture.update(None, self.data_raw(), (self.width * 4) as usize).unwrap();
         self.sdl_canvas.copy(&texture, None, None).unwrap();
         self.sdl_canvas.present();
     }
-    pub fn draw_pixel(&mut self, x: u32, y: u32, color: u32) {
-        self.data[(y * self.width + x) as usize] = color;
-    }
+
     pub fn data_raw(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len() * 4) }
+        unsafe {
+            std::slice::from_raw_parts(
+                self.pixel_data.as_ptr().cast::<u8>(),
+                self.pixel_data.len() * 4,
+            )
+        }
+    }
+
+    pub fn get_pixel_data_mut(&mut self) -> &mut Vec<u32> {
+        &mut self.pixel_data
     }
 }

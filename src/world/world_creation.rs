@@ -6,13 +6,12 @@ use crate::{
         light_properties::{LightProperties, LightType},
         point_light::PointLight,
     },
-    materials::material_manager::{self, MaterialManager, RoughnessConstants},
+    materials::material_manager::{MaterialManager, RoughnessConstants},
     objects::{
         object_properties::ObjectProperties,
         plane::Plane,
         sphere::Sphere,
         triangle::{CullMode, Triangle},
-        triangle_mesh::TriangleMesh,
     },
 };
 
@@ -82,7 +81,7 @@ pub fn create_scene_01<'a>(scene_manager: &mut SceneManager<'a>, material_manage
     let mut scene = Scenegraph::new();
 
     let grey = material_manager.get_material("lambert_Grey_RE2").unwrap();
-    let blue = material_manager.get_material("lambert_Blue_RE2").unwrap();
+    let _blue = material_manager.get_material("lambert_Blue_RE2").unwrap();
     let silver = material_manager.get_material("phong_brdf_Silver_metal_HalfRough").unwrap();
     let chrome = material_manager.get_material("phong_brdf_Copper_metal_HalfRough").unwrap();
     let gold = material_manager.get_material("phong_brdf_Gold_metal_HalfRough").unwrap();
@@ -114,16 +113,16 @@ pub fn create_scene_01<'a>(scene_manager: &mut SceneManager<'a>, material_manage
         CullMode::None,
     )));
 
-    scene.add_object(Box::new(TriangleMesh::new_from_obj(
-        ObjectProperties::new(Vec3::new(6.0, 0.0, 0.0), gold),
-        "lowpoly_bunny",
-        CullMode::BackFace,
-    )));
-    scene.add_object(Box::new(TriangleMesh::new_from_obj(
-        ObjectProperties::new(Vec3::new(-4.0, 0.0, 0.0), light_cyan_smooth),
-        "lowpoly_bunny",
-        CullMode::BackFace,
-    )));
+    //scene.add_object(Box::new(TriangleMesh::new_from_obj(
+    //    ObjectProperties::new(Vec3::new(6.0, 0.0, 0.0), gold),
+    //    "lowpoly_bunny",
+    //    CullMode::BackFace,
+    //)));
+    //scene.add_object(Box::new(TriangleMesh::new_from_obj(
+    //    ObjectProperties::new(Vec3::new(-4.0, 0.0, 0.0), light_cyan_smooth),
+    //    "lowpoly_bunny",
+    //    CullMode::BackFace,
+    //)));
     scene_manager.add_scene(scene);
 }
 

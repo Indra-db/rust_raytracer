@@ -1,6 +1,5 @@
-use crate::materials::material_properties::{DefaultMaterial, Material};
+use crate::materials::material_properties::Material;
 use glam::Vec3;
-use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct HitRecord<'mm> {
@@ -13,13 +12,6 @@ pub struct HitRecord<'mm> {
 impl<'mm> HitRecord<'mm> {
     pub fn new(hitpoint: Vec3, normal: Vec3, material: &'mm dyn Material, t: f32) -> Self {
         Self { hitpoint, normal, material: Some(material), t }
-    }
-
-    pub fn set(&mut self, hitpoint: Vec3, normal: Vec3, material: &'mm dyn Material, t: f32) {
-        self.hitpoint = hitpoint;
-        self.normal = normal;
-        self.material = Some(material);
-        self.t = t;
     }
 }
 

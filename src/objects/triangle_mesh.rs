@@ -4,12 +4,12 @@ use super::{
 };
 use crate::{hitrecord::HitRecord, ray::Ray};
 use glam::Vec3;
-use regex::Regex;
-use std::env;
-use std::fs;
+
+
+
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::path::Path;
+
 pub struct TriangleMesh<'mm> {
     pub object_properties: ObjectProperties<'mm>,
     pub triangle_mesh: Vec<Triangle<'mm>>,
@@ -41,7 +41,7 @@ impl<'mm> TriangleMesh<'mm> {
     }
 
     pub fn new_from_obj(object_properties: ObjectProperties<'mm>, obj_file_name: &str, cull_mode: CullMode) -> Self {
-        let path_to_obj = format!("assets/obj_models/{}.obj", obj_file_name);
+        let path_to_obj = format!("assets/obj_models/{obj_file_name}.obj");
 
         let regex_vertices = regex::Regex::new(r"(^v\s+(-?\d+.?\d+)\s(-?\d+.?\d+)\s(-?\d+.?\d+)\s*)").unwrap(); //x
         let regex_faces = regex::Regex::new(r"(^f\s(?:([0-9]+)\s([0-9]+)\s([0-9]+))\s*)").unwrap();
@@ -83,7 +83,7 @@ impl<'mm> TriangleMesh<'mm> {
                 cull_mode,
             ));
         }
-        Self { object_properties: object_properties, triangle_mesh: triangle_mesh }
+        Self { object_properties, triangle_mesh }
     }
 }
 

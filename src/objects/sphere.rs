@@ -1,7 +1,7 @@
 use super::object_properties::{Object, ObjectProperties};
 use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
-use glam::Vec3;
+
 
 pub struct Sphere<'mm> {
     pub object_properties: ObjectProperties<'mm>,
