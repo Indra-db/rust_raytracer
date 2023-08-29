@@ -18,7 +18,7 @@ impl LambertPhongMaterial {
         Self { properties, specular_reflectance, phong_exponent }
     }
 }
-impl<'mm> Material for LambertPhongMaterial {
+impl Material for LambertPhongMaterial {
     fn shade(
         &self,
         hitrecord: &HitRecord<'_>,

@@ -2,6 +2,7 @@ use super::light_properties::Light;
 use glam::Vec3;
 use std::boxed::Box;
 
+#[derive(Clone, PartialEq, Eq, Copy)]
 pub enum Axis {
     X,
     Y,

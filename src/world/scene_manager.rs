@@ -6,7 +6,7 @@ pub struct SceneManager<'a> {
 }
 
 impl<'a> SceneManager<'a> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { scenes: Vec::new(), current_scene_index: 0 }
     }
 

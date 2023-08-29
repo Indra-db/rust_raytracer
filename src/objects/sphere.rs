@@ -2,14 +2,13 @@ use super::object_properties::{Object, ObjectProperties};
 use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
 
-
 pub struct Sphere<'mm> {
     pub object_properties: ObjectProperties<'mm>,
     pub radius: f32,
 }
 
 impl<'mm> Sphere<'mm> {
-    pub fn new(object_properties: ObjectProperties<'mm>, radius: f32) -> Self {
+    pub const fn new(object_properties: ObjectProperties<'mm>, radius: f32) -> Self {
         Self { object_properties, radius }
     }
 }

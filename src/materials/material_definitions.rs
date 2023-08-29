@@ -23,6 +23,7 @@ pub fn create_linear_fresnel_hash_map() -> HashMap<&'static str, RGBColor> {
     map
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn create_diffuse_rgb_hash_map() -> HashMap<&'static str, RGBColor> {
     let mut map = HashMap::new();
 

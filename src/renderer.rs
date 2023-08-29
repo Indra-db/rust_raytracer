@@ -17,6 +17,9 @@ pub struct Renderer {
     pub render_mode: u8,
 }
 
+#[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_sign_loss)]
 impl Renderer {
     pub fn new(width: u32, height: u32) -> Self {
         let aspect_ratio = width as f32 / height as f32;
@@ -67,8 +70,7 @@ impl Renderer {
                     );
                     final_color.max_to_one();
 
-                    let final_color =
-                        Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
+                    let final_color = Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
 
                     row[x as usize] = final_color;
                 }
@@ -111,8 +113,11 @@ impl Renderer {
 
         let mut lambert_cosine_law;
         let offset = 0.0001;
-        let mut ray_hit_to_light = Ray::default();
-        ray_hit_to_light.origin = hit_record.hitpoint + (hit_record.normal * offset);
+
+        let mut ray_hit_to_light = Ray {
+            origin: hit_record.hitpoint + (hit_record.normal * offset),
+            ..Default::default()
+        };
 
         for light in lights {
             if !light.is_light_enabled() {
@@ -153,29 +158,32 @@ impl Renderer {
 
         if hit_record.material.unwrap().get_reflectiveness_environment().eq(&0.0) {
             return color;
-        } else {
-            let reflect =
-                ray.direction - hit_record.normal * (ray.direction.dot(hit_record.normal) * 2.0);
-            lambert_cosine_law = hit_record.normal.dot(reflect);
-
-            ray.direction = reflect.normalize();
-            ray.origin = hit_record.hitpoint;
-
-            color += self.calculate_color(
-                scenegraph,
-                lights,
-                current_amount_bounces + 1,
-                ray,
-                reflectiveness_env_mat_first_hit,
-            ) * *reflectiveness_env_mat_first_hit
-                * lambert_cosine_law;
         }
+
+        let reflect =
+            ray.direction - hit_record.normal * (ray.direction.dot(hit_record.normal) * 2.0);
+
+        lambert_cosine_law = hit_record.normal.dot(reflect);
+
+        ray.direction = reflect.normalize();
+        ray.origin = hit_record.hitpoint;
+
+        color += self.calculate_color(
+            scenegraph,
+            lights,
+            current_amount_bounces + 1,
+            ray,
+            reflectiveness_env_mat_first_hit,
+        ) * *reflectiveness_env_mat_first_hit
+            * lambert_cosine_law;
 
         color
     }
 
     fn get_ray_world_coord_x(&self, x: u32, scale_factor: f32) -> f32 {
-        2.0f32.mul_add((x as f32 + 0.5) / self.width as f32, -1.0) * self.aspect_ratio * scale_factor
+        2.0f32.mul_add((x as f32 + 0.5) / self.width as f32, -1.0)
+            * self.aspect_ratio
+            * scale_factor
     }
 
     fn get_ray_world_coord_y(&self, y: u32, scale_factor: f32) -> f32 {

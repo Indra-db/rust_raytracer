@@ -9,7 +9,7 @@ pub struct LambertianMaterial {
 }
 
 impl LambertianMaterial {
-    pub fn new(
+    pub const fn new(
         diffuse_color: RGBColor,
         diffuse_reflectance: f32,
         reflectiveness_environment: f32,
