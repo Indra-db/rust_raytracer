@@ -16,7 +16,7 @@ impl<'mm> Scenegraph<'mm> {
     }
 
     pub fn remove_object(&mut self, object: &Box<dyn Object<'mm> + 'mm + Sync>) {
-        if let Some(index) = self.objects.iter().position(|o| o as *const _ == object as *const _) {
+        if let Some(index) = self.objects.iter().position(|o| std::ptr::eq(o, object)) {
             self.objects.remove(index);
         }
     }

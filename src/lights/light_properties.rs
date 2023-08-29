@@ -1,7 +1,7 @@
 use glam::Vec3;
 pub type RGBColor = Vec3;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum LightType {
     Point,
     Directional,

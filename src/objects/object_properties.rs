@@ -2,7 +2,7 @@ use crate::hitrecord::HitRecord;
 use crate::materials::material_properties::Material;
 use crate::ray::Ray;
 use glam::Vec3;
-use std::rc::Rc;
+
 
 #[derive(Clone)]
 pub struct ObjectProperties<'mm> {

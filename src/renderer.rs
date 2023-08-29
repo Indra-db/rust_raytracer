@@ -1,16 +1,13 @@
 use crate::camera::Camera;
 use crate::hitrecord::HitRecord;
 use crate::lights::light_properties::Light;
+use crate::math::ColorTypeFunctionality;
 use crate::ray::Ray;
 use crate::world::scenegraph::Scenegraph;
 use glam::{Mat4, Vec2, Vec3, Vec4};
-use sdl2::render::WindowCanvas;
-pub type RGBColor = Vec3;
-use crate::canvas::Canvas;
-use crate::math::ColorTypeFunctionality;
 use rayon::prelude::*;
-use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::surface::{Surface, SurfaceRef};
+pub type RGBColor = Vec3;
+
 pub struct Renderer {
     aspect_ratio: f32,
     width: u32,
@@ -50,8 +47,8 @@ impl Renderer {
                 for x in 0..self.width {
                     let mut ray = Ray::new(camera.position, Vec3::ZERO);
                     let ray_ss_coords: Vec2 = Vec2::new(
-                        self.get_ray_world_coord_y(y as u32, scale_factor),
                         self.get_ray_world_coord_x(x, scale_factor),
+                        self.get_ray_world_coord_y(y as u32, scale_factor),
                     );
 
                     let pixel =
@@ -71,7 +68,7 @@ impl Renderer {
                     final_color.max_to_one();
 
                     let final_color =
-                        Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
+                        Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
 
                     row[x as usize] = final_color;
                 }
@@ -178,11 +175,11 @@ impl Renderer {
     }
 
     fn get_ray_world_coord_x(&self, x: u32, scale_factor: f32) -> f32 {
-        ((2.0 * ((x as f32 + 0.5) / self.width as f32)) - 1.0) * self.aspect_ratio * scale_factor
+        2.0f32.mul_add((x as f32 + 0.5) / self.width as f32, -1.0) * self.aspect_ratio * scale_factor
     }
 
     fn get_ray_world_coord_y(&self, y: u32, scale_factor: f32) -> f32 {
-        (1.0 - (2.0 * ((y as f32 + 0.5) / self.height as f32))) * scale_factor
+        2.0f32.mul_add(-(y as f32 + 0.5) / self.height as f32, 1.0) * scale_factor
     }
 
     fn get_color_mode_according_to_render_mode(
@@ -197,7 +194,7 @@ impl Renderer {
                 light.get_bi_radians(&hit_record.hitpoint)
                     * lambert_cosine_law
                     * hit_record.material.unwrap().shade(
-                        &hit_record,
+                        hit_record,
                         &light.get_direction(&hit_record.hitpoint),
                         &(-1.0 * ray.direction),
                     )
@@ -206,7 +203,7 @@ impl Renderer {
             2 => {
                 lambert_cosine_law
                     * hit_record.material.unwrap().shade(
-                        &hit_record,
+                        hit_record,
                         &light.get_direction(&hit_record.hitpoint),
                         &(-1.0 * ray.direction),
                     )

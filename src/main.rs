@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-#![allow(unused_imports)]
 #![deny(rust_2018_idioms)]
 #![warn(
     clippy::all,
@@ -25,25 +24,15 @@ mod renderer;
 mod world;
 
 use canvas::Canvas;
-use glam::{IVec2, Mat4, Vec3};
-use lights::{
-    directional_light::DirectionalLight,
-    light_manager::{self, LightManager},
-    light_properties::{LightProperties, LightType},
-    point_light::PointLight,
-};
-use materials::{
-    lambert_material::{self, LambertianMaterial},
-    material_manager::{self, MaterialManager},
-    material_properties::{Material, MaterialProperties, RGBColor},
-};
-use objects::{object_properties::ObjectProperties, plane::Plane, sphere::Sphere};
+use glam::{IVec2, Vec3};
+use lights::light_manager::LightManager;
+use materials::material_manager::MaterialManager;
+
 use renderer::Renderer;
-use sdl2::{event::Event, keyboard::Keycode, mouse::MouseButton, pixels::Color};
-use std::{rc::Rc, time::Duration};
+use sdl2::{event::Event, keyboard::Keycode, mouse::MouseButton};
+
 use world::{
-    scene_manager::{self, SceneManager},
-    scenegraph::Scenegraph,
+    scene_manager::SceneManager,
     world_creation::{create_lights, create_materials, create_scenes},
 };
 
@@ -106,7 +95,9 @@ fn main() {
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    break 'running
+                }
                 Event::KeyDown { keycode: Some(key), .. } => match key {
                     Keycode::W | Keycode::S | Keycode::A | Keycode::D | Keycode::Q | Keycode::E => {
                         camera.camera_translation(delta_time, key);
@@ -124,7 +115,10 @@ fn main() {
 
         let mouse_state = event_pump.relative_mouse_state();
         let (mouse_x, mouse_y) = (mouse_state.x(), mouse_state.y());
-        if mouse_state.is_mouse_button_pressed(MouseButton::Left) && mouse_x != prev_mouse_x && mouse_y != prev_mouse_y {
+        if mouse_state.is_mouse_button_pressed(MouseButton::Left)
+            && mouse_x != prev_mouse_x
+            && mouse_y != prev_mouse_y
+        {
             camera.camera_rotation(delta_time, IVec2::new(mouse_x, mouse_y));
             prev_mouse_x = mouse_x;
             prev_mouse_y = mouse_y;
@@ -134,19 +128,25 @@ fn main() {
 
         scene_manager.update(delta_time);
 
-        render_system.render(canvas.get_pixel_data_mut(), scene_manager.get_current_scene(), &camera, light_manager.get_lights());
+        render_system.render(
+            canvas.get_pixel_data_mut(),
+            scene_manager.get_current_scene(),
+            &camera,
+            light_manager.get_lights(),
+        );
 
-        let (pixel_data_length, pixel_data) = canvas.get_pixel_data_raw();
-        canvas.flush(pixel_data, pixel_data_length);
+        canvas.flush();
 
         frame_count += 1;
 
         #[allow(clippy::cast_precision_loss)]
         unsafe {
             let current_time = sdl2::sys::SDL_GetPerformanceCounter();
-            delta_time = (current_time - previous_time) as f32 / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
+            delta_time = (current_time - previous_time) as f32
+                / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
             previous_time = current_time;
-            let elapsed_seconds = (current_time - last_fps_time) as f32 / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
+            let elapsed_seconds = (current_time - last_fps_time) as f32
+                / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
 
             if elapsed_seconds >= 1.0 {
                 println!("FPS: {frame_count}");

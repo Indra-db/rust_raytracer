@@ -14,16 +14,16 @@ pub enum RoughnessConstants {
 impl RoughnessConstants {
     fn value(&self) -> f32 {
         match *self {
-            RoughnessConstants::Smooth => 0.1,
-            RoughnessConstants::HalfRough => 0.6,
-            RoughnessConstants::Rough => 1.0,
+            Self::Smooth => 0.1,
+            Self::HalfRough => 0.6,
+            Self::Rough => 1.0,
         }
     }
     fn string(&self) -> &str {
         match *self {
-            RoughnessConstants::Smooth => "Smooth",
-            RoughnessConstants::HalfRough => "HalfRough",
-            RoughnessConstants::Rough => "Rough",
+            Self::Smooth => "Smooth",
+            Self::HalfRough => "HalfRough",
+            Self::Rough => "Rough",
         }
     }
 }
@@ -44,9 +44,7 @@ impl<'a> MaterialManager<'a> {
     }
 
     pub fn add_material(&mut self, name: String, material: Box<dyn Material>) {
-        if !self.materials.contains_key(&name) {
-            self.materials.insert(name, material);
-        }
+        self.materials.entry(name).or_insert(material);
     }
 
     pub fn get_material(&self, name: &str) -> Option<&dyn Material> {
@@ -54,7 +52,7 @@ impl<'a> MaterialManager<'a> {
     }
 
     pub fn add_lambert_material(&mut self, color_name: &str, reflectiveness: i32) {
-        let material_id: String = format!("lambert_{}_RE{}", color_name, reflectiveness);
+        let material_id: String = format!("lambert_{color_name}_RE{reflectiveness}");
 
         if self.materials.contains_key(&material_id) {
             return;
@@ -63,7 +61,7 @@ impl<'a> MaterialManager<'a> {
         let diffuse_color = match self.diffuse_colors.get(color_name) {
             Some(color) => *color / 255.0,
             None => {
-                println!("Color {} not found", color_name);
+                println!("Color {color_name} not found");
                 return;
             }
         };
@@ -75,7 +73,7 @@ impl<'a> MaterialManager<'a> {
     }
 
     pub fn add_lambert_phong_material(&mut self, color_name: &str, reflectiveness: i32) {
-        let material_id: String = format!("lambert_phong_{}_RE{}", color_name, reflectiveness);
+        let material_id: String = format!("lambert_phong_{color_name}_RE{reflectiveness}");
 
         if self.materials.contains_key(&material_id) {
             return;
@@ -84,7 +82,7 @@ impl<'a> MaterialManager<'a> {
         let diffuse_color = match self.diffuse_colors.get(color_name) {
             Some(color) => *color / 255.0,
             None => {
-                println!("Color {} not found", color_name);
+                println!("Color {color_name} not found");
                 return;
             }
         };
@@ -105,7 +103,7 @@ impl<'a> MaterialManager<'a> {
         let fresnel_value = match self.linear_freshnel.get(albedo) {
             Some(color) => *color,
             None => {
-                println!("Color {} not found", albedo);
+                println!("Color {albedo} not found");
                 return;
             }
         };
@@ -126,7 +124,7 @@ impl<'a> MaterialManager<'a> {
         let fresnel_value = match self.diffuse_colors.get(albedo) {
             Some(color) => *color / 255.0,
             None => {
-                println!("Color {} not found", albedo);
+                println!("Color {albedo} not found");
                 return;
             }
         };

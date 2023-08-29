@@ -1,4 +1,4 @@
-use super::light_properties::{Light, LightProperties, LightType};
+use super::light_properties::Light;
 use glam::Vec3;
 use std::boxed::Box;
 
@@ -15,7 +15,7 @@ pub struct LightManager {
 
 impl LightManager {
     pub fn new() -> Self {
-        LightManager { lights: Vec::new(), selected_light_index: 0 }
+        Self { lights: Vec::new(), selected_light_index: 0 }
     }
 
     pub fn add_light(&mut self, light: Box<dyn Light + Sync>) {
@@ -23,7 +23,7 @@ impl LightManager {
     }
 
     pub fn remove_light(&mut self, light: &Box<dyn Light + Sync>) {
-        if let Some(index) = self.lights.iter().position(|l| l as *const _ == light as *const _) {
+        if let Some(index) = self.lights.iter().position(|l| std::ptr::eq(l, light)) {
             self.lights.remove(index);
         }
     }
@@ -33,7 +33,7 @@ impl LightManager {
     }
 
     pub fn toggle_selected_light(&mut self) {
-        self.lights[self.selected_light_index as usize].toggle_light();
+        self.lights[self.selected_light_index].toggle_light();
 
         todo!("not safe")
     }
@@ -88,7 +88,7 @@ impl LightManager {
         let intensity = light.get_intensity_mut();
 
         *intensity += value;
-        println!("selected light intensity: {}", intensity);
+        println!("selected light intensity: {intensity}");
     }
 
     pub fn num_lights(&self) -> usize {
