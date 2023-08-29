@@ -46,8 +46,8 @@ impl Renderer {
                 let mut ray = Ray::new(camera.position, Vec3::ZERO);
                 let mut ray_ss_coords: Vec2 = Vec2::ZERO;
 
-                ray_ss_coords.x = Renderer::get_ray_world_coord_y(y as u32, scale_factor, self.height);
-                ray_ss_coords.y = Renderer::get_ray_world_coord_x(x, scale_factor, self.width, self.aspect_ratio);
+                ray_ss_coords.y = Renderer::get_ray_world_coord_y(y as u32, scale_factor, self.height);
+                ray_ss_coords.x = Renderer::get_ray_world_coord_x(x, scale_factor, self.width, self.aspect_ratio);
 
                 let pixel = *camera_look_at * Vec4::new(ray_ss_coords.x, ray_ss_coords.y, -1.0, 1.0);
                 ray.direction = (pixel.truncate() - ray.origin).normalize();
