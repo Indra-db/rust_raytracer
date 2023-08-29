@@ -3,7 +3,7 @@ use crate::objects::object_properties::Object;
 use crate::ray::Ray;
 
 pub struct Scenegraph<'mm> {
-    objects: Vec<Box<dyn Object<'mm> + 'mm>>,
+    objects: Vec<Box<dyn Object<'mm> + 'mm + Sync>>,
 }
 
 impl<'mm> Scenegraph<'mm> {
@@ -11,17 +11,17 @@ impl<'mm> Scenegraph<'mm> {
         Scenegraph { objects: Vec::new() }
     }
 
-    pub fn add_object(&mut self, object: Box<dyn Object<'mm> + 'mm>) {
+    pub fn add_object(&mut self, object: Box<dyn Object<'mm> + 'mm + Sync>) {
         self.objects.push(object);
     }
 
-    pub fn remove_object(&mut self, object: &Box<dyn Object<'mm> + 'mm>) {
+    pub fn remove_object(&mut self, object: &Box<dyn Object<'mm> + 'mm + Sync>) {
         if let Some(index) = self.objects.iter().position(|o| o as *const _ == object as *const _) {
             self.objects.remove(index);
         }
     }
 
-    pub fn get_objects(&self) -> &Vec<Box<dyn Object<'mm> + 'mm>> {
+    pub fn get_objects(&self) -> &Vec<Box<dyn Object<'mm> + 'mm + Sync>> {
         &self.objects
     }
 

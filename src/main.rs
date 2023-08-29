@@ -100,7 +100,7 @@ fn main() {
     let mut scene_manager: SceneManager<'_> = SceneManager::new();
     create_scenes(&mut scene_manager, &material_manager);
 
-    let mut render_system = Renderer::new(&mut canvas);
+    let mut render_system = Renderer::new(width, height);
     let mut prev_mouse_x = 0;
     let mut prev_mouse_y = 0;
     'running: loop {
@@ -135,6 +135,9 @@ fn main() {
         scene_manager.update(delta_time);
 
         render_system.render(scene_manager.get_current_scene(), &camera, light_manager.get_lights());
+
+        let (pixel_data_length, pixel_data) = render_system.get_pixel_data_raw();
+        canvas.flush(pixel_data, pixel_data_length);
 
         frame_count += 1;
 

@@ -15,7 +15,7 @@ pub struct LightProperties {
     pub light_type: LightType,
 }
 
-pub trait Light {
+pub trait Light: Sync + Send {
     fn get_bi_radians(&self, position: &Vec3) -> RGBColor;
     fn get_direction(&self, position: &Vec3) -> Vec3;
     fn get_direction_magnitude(&self, position: &Vec3, direction_magnitude: &mut f32) -> Vec3;
@@ -29,12 +29,7 @@ pub trait Light {
 }
 
 impl LightProperties {
-    pub const fn new(
-        color: RGBColor,
-        intensity: f32,
-        is_enabled: bool,
-        light_type: LightType,
-    ) -> Self {
+    pub const fn new(color: RGBColor, intensity: f32, is_enabled: bool, light_type: LightType) -> Self {
         Self { color, intensity, is_enabled, light_type }
     }
 

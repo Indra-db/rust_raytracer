@@ -9,7 +9,7 @@ pub enum Axis {
 }
 
 pub struct LightManager {
-    lights: Vec<Box<dyn Light>>,
+    lights: Vec<Box<dyn Light + Sync>>,
     selected_light_index: usize,
 }
 
@@ -18,11 +18,11 @@ impl LightManager {
         LightManager { lights: Vec::new(), selected_light_index: 0 }
     }
 
-    pub fn add_light(&mut self, light: Box<dyn Light>) {
+    pub fn add_light(&mut self, light: Box<dyn Light + Sync>) {
         self.lights.push(light);
     }
 
-    pub fn remove_light(&mut self, light: &Box<dyn Light>) {
+    pub fn remove_light(&mut self, light: &Box<dyn Light + Sync>) {
         if let Some(index) = self.lights.iter().position(|l| l as *const _ == light as *const _) {
             self.lights.remove(index);
         }
@@ -95,7 +95,7 @@ impl LightManager {
         self.lights.len()
     }
 
-    pub fn get_lights(&self) -> &Vec<Box<dyn Light>> {
+    pub fn get_lights(&self) -> &Vec<Box<dyn Light + Sync>> {
         &self.lights
     }
 }

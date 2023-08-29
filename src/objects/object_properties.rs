@@ -16,7 +16,7 @@ impl<'mm> ObjectProperties<'mm> {
     }
 }
 
-pub trait Object<'mm> {
+pub trait Object<'mm>: Sync + Send {
     fn hit(&self, ray: &Ray, hit_record: &mut HitRecord<'mm>, is_shadow_ray: bool) -> bool;
     fn update(&self, delta_time: f32);
 }
