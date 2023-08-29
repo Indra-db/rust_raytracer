@@ -45,37 +45,36 @@ impl Renderer {
         let scale_factor = camera.get_scale_factor();
 
         // We are grabbing a parallel iterator over rows
-        pixel_data.par_chunks_mut(self.width as usize).into_par_iter().enumerate().for_each(
-            |(y, row)| {
-                for x in 0..self.width {
-                    let mut ray = Ray::new(camera.position, Vec3::ZERO);
-                    let ray_ss_coords: Vec2 = Vec2::new(
-                        self.get_ray_world_coord_x(x, scale_factor),
-                        self.get_ray_world_coord_y(y as u32, scale_factor),
-                    );
+        pixel_data.par_chunks_mut(self.width as usize).enumerate().for_each(|(y, row)| {
+            let mut ray_ss_coords: Vec2 =
+                Vec2 { x: 0.0, y: self.get_ray_world_coord_y(y as u32, scale_factor) };
 
-                    let pixel =
-                        *camera_look_at * Vec4::new(ray_ss_coords.x, ray_ss_coords.y, -1.0, 1.0);
+            //for x in 0..self.width {
+            for (x, pixel_data) in row.iter_mut().enumerate() {
+                let mut ray = Ray::new(camera.position, Vec3::ZERO);
+                ray_ss_coords.x = self.get_ray_world_coord_x(x as u32, scale_factor);
 
-                    ray.direction = (pixel.truncate() - ray.origin).normalize();
+                let pixel =
+                    *camera_look_at * Vec4::new(ray_ss_coords.x, ray_ss_coords.y, -1.0, 1.0);
 
-                    let mut reflectiveness_env_mat_first_hit = 0.0;
+                ray.direction = (pixel.truncate() - ray.origin).normalize();
 
-                    let mut final_color: RGBColor = self.calculate_color(
-                        scenegraph,
-                        lights,
-                        0,
-                        &mut ray,
-                        &mut reflectiveness_env_mat_first_hit,
-                    );
-                    final_color.max_to_one();
+                let mut reflectiveness_env_mat_first_hit = 0.0;
 
-                    let final_color = Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
+                let mut final_color: RGBColor = self.calculate_color(
+                    scenegraph,
+                    lights,
+                    0,
+                    &mut ray,
+                    &mut reflectiveness_env_mat_first_hit,
+                );
+                final_color.max_to_one();
 
-                    row[x as usize] = final_color;
-                }
-            },
-        );
+                let final_color = Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
+                *pixel_data = final_color;
+                //row[x as usize] = final_color;
+            }
+        });
     }
 
     fn to_u32_rgb(r: f32, g: f32, b: f32) -> u32 {
