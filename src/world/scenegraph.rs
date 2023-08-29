@@ -1,9 +1,10 @@
 use crate::hitrecord::HitRecord;
 use crate::objects::object_properties::Object;
+use crate::objects::ObjectEnum;
 use crate::ray::Ray;
 
 pub struct Scenegraph<'mm> {
-    objects: Vec<Box<dyn Object<'mm> + 'mm + Sync>>,
+    objects: Vec<ObjectEnum<'mm>>,
 }
 
 impl<'mm> Scenegraph<'mm> {
@@ -11,17 +12,17 @@ impl<'mm> Scenegraph<'mm> {
         Scenegraph { objects: Vec::new() }
     }
 
-    pub fn add_object(&mut self, object: Box<dyn Object<'mm> + 'mm + Sync>) {
+    pub fn add_object(&mut self, object: ObjectEnum<'mm>) {
         self.objects.push(object);
     }
 
-    pub fn remove_object(&mut self, object: &Box<dyn Object<'mm> + 'mm + Sync>) {
+    pub fn remove_object(&mut self, object: &ObjectEnum<'mm>) {
         if let Some(index) = self.objects.iter().position(|o| std::ptr::eq(o, object)) {
             self.objects.remove(index);
         }
     }
 
-    pub fn get_objects(&self) -> &Vec<Box<dyn Object<'mm> + 'mm + Sync>> {
+    pub fn get_objects(&self) -> &Vec<ObjectEnum<'mm>> {
         &self.objects
     }
 
