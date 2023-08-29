@@ -1,3 +1,7 @@
+//this file content was part of my first time doing generics in Rust.
+//The goal was practice, not to actually use it in the end.
+//I opted to use glam instead of this, but I'm keeping this file for reference.
+
 // 1. imports
 use num_traits::Float;
 use std::ops::{Add, DivAssign, Index, IndexMut, Mul, Sub};
