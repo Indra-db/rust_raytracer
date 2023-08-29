@@ -15,7 +15,7 @@ impl<'mm> Plane<'mm> {
 }
 
 impl<'mm> Object<'mm> for Plane<'mm> {
-    fn hit(&self, ray: &Ray, hit_record: &mut HitRecord<'mm>, _is_shadow_ray: bool) -> bool {
+    fn hit(&self, ray: &Ray, hit_record: &mut HitRecord<'mm>, is_shadow_ray: bool) -> bool {
         // Calculate the dot product between the ray direction and the plane's normal.
         let ray_dot_normal = ray.direction.dot(self.normal);
 
@@ -32,9 +32,9 @@ impl<'mm> Object<'mm> for Plane<'mm> {
             return false;
         }
 
-        //if hit_record.t < intersection_distance {
-        //    return true;
-        //}
+        if is_shadow_ray {
+            return true;
+        }
 
         // Update the hit record
         hit_record.t = intersection_distance;

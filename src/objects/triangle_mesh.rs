@@ -5,8 +5,10 @@ use super::{
 use crate::{hitrecord::HitRecord, ray::Ray};
 use glam::Vec3;
 
-use std::fs::File;
-use std::io::{self, BufRead};
+use std::{
+    fs::File,
+    io::{self, BufRead},
+};
 
 pub struct TriangleMesh<'mm> {
     pub object_properties: ObjectProperties<'mm>,
@@ -101,15 +103,7 @@ impl<'mm> TriangleMesh<'mm> {
 
 impl<'mm> Object<'mm> for TriangleMesh<'mm> {
     fn hit(&self, ray: &Ray, hit_record: &mut HitRecord<'mm>, is_shadow_ray: bool) -> bool {
-        let mut hit_anything = false;
-
-        for triangle in &self.triangle_mesh {
-            if triangle.hit(ray, hit_record, is_shadow_ray) {
-                hit_anything = true;
-            }
-        }
-
-        hit_anything
+        self.triangle_mesh.iter().any(|triangle| triangle.hit(ray, hit_record, is_shadow_ray))
     }
 
     fn update(&self, _delta_time: f32) {}

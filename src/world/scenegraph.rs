@@ -33,21 +33,18 @@ impl<'mm> Scenegraph<'mm> {
     }
 
     pub fn hit(&self, ray: &mut Ray, hit_record: &mut HitRecord<'mm>, is_shadow: bool) -> bool {
-        let mut hit_anything = false;
-
-        //we reset the t value of the hit record to the maximum value of f32 every new frame check
+        // Reset the t value of the hit record to the maximum value of f32 every new frame check
         if !is_shadow {
             ray.t_max = f32::MAX;
         }
 
-        for object in &self.objects {
+        self.objects.iter().fold(false, |hit_anything, object| {
             if object.hit(ray, hit_record, is_shadow) {
-                hit_anything = true;
-                ////change t_max to know in which order we have to render the objects
                 ray.t_max = hit_record.t;
+                true
+            } else {
+                hit_anything
             }
-        }
-
-        hit_anything
+        })
     }
 }
