@@ -155,16 +155,17 @@ pub fn create_scene_01<'a>(
         CullMode::None,
     )));
 
-    // /scene.add_object(Box::new(TriangleMesh::new_from_obj(
-    // /    ObjectProperties::new(Vec3::new(6.0, 0.0, 0.0), gold),
-    // /    "lowpoly_bunny",
-    // /    CullMode::BackFace,
-    // /)));
-    //scene.add_object(Box::new(TriangleMesh::new_from_obj(
+    //scene.add_object(ObjectEnum::TriangleMesh(TriangleMesh::new_from_obj(
+    //    ObjectProperties::new(Vec3::new(6.0, 0.0, 0.0), gold),
+    //    "lowpoly_bunny",
+    //    CullMode::BackFace,
+    //)));
+    //scene.add_object(ObjectEnum::TriangleMesh(TriangleMesh::new_from_obj(
     //    ObjectProperties::new(Vec3::new(-4.0, 0.0, 0.0), light_cyan_smooth),
     //    "lowpoly_bunny",
     //    CullMode::BackFace,
     //)));
+
     scene_manager.add_scene(scene);
 }
 

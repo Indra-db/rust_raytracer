@@ -60,15 +60,8 @@ impl Renderer {
 
                 ray.direction = (pixel.truncate() - ray.origin).normalize();
 
-                let mut reflectiveness_env_mat_first_hit = 0.0;
-
-                let mut final_color: RGBColor = self.calculate_color(
-                    scenegraph,
-                    lights,
-                    0,
-                    &mut ray,
-                    &mut reflectiveness_env_mat_first_hit,
-                );
+                let mut final_color: RGBColor =
+                    self.calculate_color(scenegraph, lights, 0, &mut ray);
                 final_color.max_to_one();
 
                 let final_color = Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
@@ -90,94 +83,94 @@ impl Renderer {
         &self,
         scenegraph: &Scenegraph<'_>,
         lights: &Vec<LightEnum>,
-        current_amount_bounces: u32,
+        mut current_amount_bounces: u32,
         ray: &mut Ray,
-        reflectiveness_env_mat_first_hit: &mut f32,
     ) -> RGBColor {
-        let mut color = RGBColor::ZERO;
+        let mut accumulated_color = RGBColor::ZERO;
+        let mut reflectiveness_env_mat_first_hit = 1.0;
+        let mut previous_reflectivness = 1.0;
+        let mut previous_lambert = 1.0;
 
-        if current_amount_bounces >= self.max_bounces {
-            return color;
-        }
-        let mut hit_record = HitRecord::default();
-        if !scenegraph.hit(ray, &mut hit_record, false) {
-            return color;
-        }
+        while current_amount_bounces < self.max_bounces {
+            let mut bounce_color = RGBColor::ZERO;
 
-        if current_amount_bounces == 0 {
-            *reflectiveness_env_mat_first_hit = match hit_record.material {
-                Some(_) => hit_record.material.unwrap().get_reflectiveness_environment(),
-                None => return RGBColor::ZERO,
-            };
-        }
-
-        let mut lambert_cosine_law;
-        let offset = 0.0001;
-
-        let mut ray_hit_to_light = Ray {
-            origin: hit_record.hitpoint + (hit_record.normal * offset),
-            ..Default::default()
-        };
-
-        for light in lights {
-            if !light.is_light_enabled() {
-                continue;
+            let mut hit_record = HitRecord::default();
+            if !scenegraph.hit(ray, &mut hit_record, false) {
+                break;
             }
 
-            if self.are_hard_shadows_enabled {
-                let mut direction_magnitude_returned = 0.0;
+            if current_amount_bounces == 0 {
+                reflectiveness_env_mat_first_hit = match hit_record.material {
+                    Some(_) => hit_record.material.unwrap().get_reflectiveness_environment(),
+                    None => return RGBColor::ZERO,
+                };
+            }
 
-                ray_hit_to_light.direction = light.get_direction_magnitude(
-                    &hit_record.hitpoint,
-                    &mut direction_magnitude_returned,
-                );
+            let mut lambert_cosine_law;
+            let offset = 0.0001;
 
-                ray_hit_to_light.t_min = 0.0001; //-> f32::EPSILON is too low.
-                ray_hit_to_light.t_max = direction_magnitude_returned;
-                let mut hit_record_shadow = HitRecord::default();
-                if scenegraph.hit(&mut ray_hit_to_light, &mut hit_record_shadow, true) {
+            let mut ray_hit_to_light = Ray {
+                origin: hit_record.hitpoint + (hit_record.normal * offset),
+                ..Default::default()
+            };
+
+            for light in lights {
+                if !light.is_light_enabled() {
                     continue;
                 }
+
+                if self.are_hard_shadows_enabled {
+                    let mut direction_magnitude_returned = 0.0;
+
+                    ray_hit_to_light.direction = light.get_direction_magnitude(
+                        &hit_record.hitpoint,
+                        &mut direction_magnitude_returned,
+                    );
+
+                    ray_hit_to_light.t_min = 0.0001;
+                    ray_hit_to_light.t_max = direction_magnitude_returned;
+                    let mut hit_record_shadow = HitRecord::default();
+                    if scenegraph.hit(&mut ray_hit_to_light, &mut hit_record_shadow, true) {
+                        continue;
+                    }
+                }
+
+                lambert_cosine_law =
+                    hit_record.normal.dot(light.get_direction(&hit_record.hitpoint));
+
+                if lambert_cosine_law < 0.0 {
+                    continue;
+                }
+
+                bounce_color += self.get_color_mode_according_to_render_mode(
+                    light,
+                    lambert_cosine_law,
+                    &hit_record,
+                    ray,
+                );
             }
 
-            lambert_cosine_law = hit_record.normal.dot(light.get_direction(&hit_record.hitpoint));
-
-            if lambert_cosine_law < 0.0 {
-                continue;
+            if hit_record.material.unwrap().get_reflectiveness_environment().eq(&0.0) {
+                break;
             }
 
-            color += self.get_color_mode_according_to_render_mode(
-                light,
-                lambert_cosine_law,
-                &hit_record,
-                ray,
-            );
+            let reflect =
+                ray.direction - hit_record.normal * (ray.direction.dot(hit_record.normal) * 2.0);
+
+            lambert_cosine_law = hit_record.normal.dot(reflect);
+
+            ray.direction = reflect.normalize();
+            ray.origin = hit_record.hitpoint;
+
+            accumulated_color += bounce_color * previous_reflectivness * previous_lambert;
+
+            previous_reflectivness = reflectiveness_env_mat_first_hit;
+            previous_lambert = lambert_cosine_law;
+
+            current_amount_bounces += 1;
         }
-
-        //color = color / lights.len() as f32; //this currently makes everything too dark
-
-        if hit_record.material.unwrap().get_reflectiveness_environment().eq(&0.0) {
-            return color;
-        }
-
-        let reflect =
-            ray.direction - hit_record.normal * (ray.direction.dot(hit_record.normal) * 2.0);
-
-        lambert_cosine_law = hit_record.normal.dot(reflect);
-
-        ray.direction = reflect.normalize();
-        ray.origin = hit_record.hitpoint;
-
-        color += self.calculate_color(
-            scenegraph,
-            lights,
-            current_amount_bounces + 1,
-            ray,
-            reflectiveness_env_mat_first_hit,
-        ) * *reflectiveness_env_mat_first_hit
-            * lambert_cosine_law;
-
-        color
+        //accumulated_color = accumulated_color / lights.len() as f32;
+        accumulated_color
     }
 
     fn get_ray_world_coord_x(&self, x: u32, scale_factor: f32) -> f32 {
