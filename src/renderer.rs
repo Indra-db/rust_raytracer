@@ -24,7 +24,7 @@ pub struct Renderer {
 impl Renderer {
     pub fn new(width: u32, height: u32) -> Self {
         let aspect_ratio = width as f32 / height as f32;
-        let max_bounces = 6;
+        let max_bounces = 4;
         Self {
             aspect_ratio,
             width,
