@@ -147,7 +147,7 @@ impl Renderer {
             }
 
             color += self.get_color_mode_according_to_render_mode(
-                &light,
+                light,
                 lambert_cosine_law,
                 &hit_record,
                 ray,

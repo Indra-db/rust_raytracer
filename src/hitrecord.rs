@@ -10,7 +10,7 @@ pub struct HitRecord<'mm> {
 }
 
 impl<'mm> HitRecord<'mm> {
-    pub fn new(hitpoint: Vec3, normal: Vec3, material: &'mm MaterialEnum, t: f32) -> Self {
+    pub const fn new(hitpoint: Vec3, normal: Vec3, material: &'mm MaterialEnum, t: f32) -> Self {
         Self { hitpoint, normal, material: Some(material), t }
     }
 }

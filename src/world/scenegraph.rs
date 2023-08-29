@@ -8,7 +8,7 @@ pub struct Scenegraph<'mm> {
 }
 
 impl<'mm> Scenegraph<'mm> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Scenegraph { objects: Vec::new() }
     }
 
@@ -22,7 +22,7 @@ impl<'mm> Scenegraph<'mm> {
         }
     }
 
-    pub fn get_objects(&self) -> &Vec<ObjectEnum<'mm>> {
+    pub const fn get_objects(&self) -> &Vec<ObjectEnum<'mm>> {
         &self.objects
     }
 

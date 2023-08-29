@@ -16,7 +16,7 @@ pub struct LightManager<T: Light> {
 type CommonLightManager = LightManager<LightEnum>;
 
 impl<T: Light> LightManager<T> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { lights: Vec::new(), selected_light_index: 0 }
     }
 
@@ -97,7 +97,7 @@ impl<T: Light> LightManager<T> {
         self.lights.len()
     }
 
-    pub fn get_lights(&self) -> &Vec<T> {
+    pub const fn get_lights(&self) -> &Vec<T> {
         &self.lights
     }
 }
