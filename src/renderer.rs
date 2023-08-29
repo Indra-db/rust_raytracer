@@ -50,7 +50,6 @@ impl Renderer {
             let mut ray_ss_coords: Vec2 =
                 Vec2 { x: 0.0, y: self.get_ray_world_coord_y(y as u32, scale_factor) };
 
-            //for x in 0..self.width {
             for (x, pixel_data) in row.iter_mut().enumerate() {
                 let mut ray = Ray::new(camera.position, Vec3::ZERO);
                 ray_ss_coords.x = self.get_ray_world_coord_x(x as u32, scale_factor);
@@ -66,7 +65,6 @@ impl Renderer {
 
                 let final_color = Self::to_u32_rgb(final_color.x, final_color.y, final_color.z);
                 *pixel_data = final_color;
-                //row[x as usize] = final_color;
             }
         });
     }
