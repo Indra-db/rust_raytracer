@@ -1,10 +1,10 @@
-use super::lambert_material::LambertianMaterial;
+use super::lambert_material::LambertMaterial;
 use super::lambert_phong_material::LambertPhongMaterial;
 use super::material_definitions::{
     create_diffuse_rgb_hash_map, create_linear_fresnel_hash_map, RGBColor,
 };
 use super::material_properties::{Material, MaterialProperties};
-use super::phong_brdf_material::PhongBRDF;
+use super::phong_brdf_material::PhongBRDFMaterial;
 use std::collections::HashMap;
 
 #[derive(Copy, Clone)]
@@ -73,7 +73,7 @@ impl<'a> MaterialManager<'a> {
         };
 
         let reflectiveness = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
-        let new_material = Box::new(LambertianMaterial::new(
+        let new_material = Box::new(LambertMaterial::new(
             diffuse_color,
             Self::DIFFUSE_REFLECTANCE,
             reflectiveness,
@@ -121,7 +121,7 @@ impl<'a> MaterialManager<'a> {
         };
 
         let roughness_value = roughness.value();
-        let new_material = Box::new(PhongBRDF::new(
+        let new_material = Box::new(PhongBRDFMaterial::new(
             fresnel_value,
             roughness_value,
             true,
@@ -154,7 +154,7 @@ impl<'a> MaterialManager<'a> {
 
         let roughness_value = roughness.value();
         let reflectiveness_value = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
-        let new_material = Box::new(PhongBRDF::new(
+        let new_material = Box::new(PhongBRDFMaterial::new(
             fresnel_value,
             roughness_value,
             false,

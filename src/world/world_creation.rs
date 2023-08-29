@@ -1,4 +1,5 @@
 use super::{scene_manager::SceneManager, scenegraph::Scenegraph};
+use crate::lights::{light_manager::LightManager, LightEnum};
 #[allow(unused_imports)]
 use crate::{
     lights::{
@@ -54,23 +55,23 @@ pub fn create_materials(material_manager: &mut MaterialManager<'_>) {
     material_manager.add_phong_brdf_dielectric_material("SkyBlue", RoughnessConstants::Rough, 2);
 }
 
-pub fn create_lights(light_manager: &mut light_manager::LightManager) {
-    light_manager.add_light(Box::new(PointLight::new(
+pub fn create_lights(light_manager: &mut LightManager<LightEnum>) {
+    light_manager.add_light(LightEnum::Point(PointLight::new(
         LightProperties::new(Vec3::new(0.84, 0.8, 0.6), 100.0, true, LightType::Point),
         Vec3::new(-0.5, 5.5, 10.5),
     )));
 
-    light_manager.add_light(Box::new(PointLight::new(
+    light_manager.add_light(LightEnum::Point(PointLight::new(
         LightProperties::new(Vec3::new(0.95, 0.65, 1.0), 50.0, true, LightType::Point),
         Vec3::new(0.3, 3.0, 10.5),
     )));
 
-    light_manager.add_light(Box::new(PointLight::new(
+    light_manager.add_light(LightEnum::Point(PointLight::new(
         LightProperties::new(Vec3::new(0.55, 0.65, 1.0), 35.0, true, LightType::Point),
         Vec3::new(-0.2, 8.0, -2.),
     )));
 
-    light_manager.add_light(Box::new(DirectionalLight::new(
+    light_manager.add_light(LightEnum::Directional(DirectionalLight::new(
         LightProperties::new(Vec3::new(0.8, 0.8, 0.8), 0.5, true, LightType::Directional),
         Vec3::new(0.0, -1.0, 0.0),
     )));

@@ -25,7 +25,7 @@ mod world;
 
 use canvas::Canvas;
 use glam::{IVec2, Vec3};
-use lights::light_manager::LightManager;
+use lights::{light_manager::LightManager, LightEnum};
 use materials::material_manager::MaterialManager;
 
 use renderer::Renderer;
@@ -83,7 +83,7 @@ fn main() {
     let mut material_manager: MaterialManager<'_> = MaterialManager::new();
     create_materials(&mut material_manager);
 
-    let mut light_manager: LightManager = LightManager::new();
+    let mut light_manager: LightManager<LightEnum> = LightManager::new();
     create_lights(&mut light_manager);
 
     let mut scene_manager: SceneManager<'_> = SceneManager::new();

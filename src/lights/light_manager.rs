@@ -1,6 +1,5 @@
-use super::light_properties::Light;
+use super::{light_properties::Light, LightEnum};
 use glam::Vec3;
-use std::boxed::Box;
 
 #[derive(Clone, PartialEq, Eq, Copy)]
 pub enum Axis {
@@ -9,21 +8,23 @@ pub enum Axis {
     Z,
 }
 
-pub struct LightManager {
-    lights: Vec<Box<dyn Light + Sync>>,
+pub struct LightManager<T: Light> {
+    lights: Vec<T>,
     selected_light_index: usize,
 }
 
-impl LightManager {
+type CommonLightManager = LightManager<LightEnum>;
+
+impl<T: Light> LightManager<T> {
     pub fn new() -> Self {
         Self { lights: Vec::new(), selected_light_index: 0 }
     }
 
-    pub fn add_light(&mut self, light: Box<dyn Light + Sync>) {
+    pub fn add_light(&mut self, light: T) {
         self.lights.push(light);
     }
 
-    pub fn remove_light(&mut self, light: &Box<dyn Light + Sync>) {
+    pub fn remove_light(&mut self, light: &T) {
         if let Some(index) = self.lights.iter().position(|l| std::ptr::eq(l, light)) {
             self.lights.remove(index);
         }
@@ -96,7 +97,7 @@ impl LightManager {
         self.lights.len()
     }
 
-    pub fn get_lights(&self) -> &Vec<Box<dyn Light + Sync>> {
+    pub fn get_lights(&self) -> &Vec<T> {
         &self.lights
     }
 }
