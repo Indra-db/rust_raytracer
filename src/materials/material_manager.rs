@@ -3,8 +3,9 @@ use super::lambert_phong_material::LambertPhongMaterial;
 use super::material_definitions::{
     create_diffuse_rgb_hash_map, create_linear_fresnel_hash_map, RGBColor,
 };
-use super::material_properties::{Material, MaterialProperties};
+use super::material_properties::MaterialProperties;
 use super::phong_brdf_material::PhongBRDFMaterial;
+use super::MaterialEnum;
 use std::collections::HashMap;
 
 #[derive(Copy, Clone)]
@@ -34,7 +35,7 @@ impl RoughnessConstants {
 pub struct MaterialManager<'a> {
     linear_freshnel: HashMap<&'a str, RGBColor>,
     diffuse_colors: HashMap<&'a str, RGBColor>,
-    pub materials: HashMap<String, Box<dyn Material>>,
+    pub materials: HashMap<String, MaterialEnum>,
 }
 
 impl<'a> MaterialManager<'a> {
@@ -50,12 +51,12 @@ impl<'a> MaterialManager<'a> {
         }
     }
 
-    pub fn add_material(&mut self, name: String, material: Box<dyn Material>) {
+    pub fn add_material(&mut self, name: String, material: MaterialEnum) {
         self.materials.entry(name).or_insert(material);
     }
 
-    pub fn get_material(&self, name: &str) -> Option<&dyn Material> {
-        self.materials.get(name).map(AsRef::as_ref)
+    pub fn get_material(&self, name: &str) -> Option<&MaterialEnum> {
+        self.materials.get(name)
     }
 
     pub fn add_lambert_material(&mut self, color_name: &str, reflectiveness: i32) {
@@ -73,7 +74,7 @@ impl<'a> MaterialManager<'a> {
         };
 
         let reflectiveness = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
-        let new_material = Box::new(LambertMaterial::new(
+        let new_material = MaterialEnum::Lambert(LambertMaterial::new(
             diffuse_color,
             Self::DIFFUSE_REFLECTANCE,
             reflectiveness,
@@ -97,7 +98,7 @@ impl<'a> MaterialManager<'a> {
         };
 
         let reflectiveness = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
-        let new_material = Box::new(LambertPhongMaterial::new(
+        let new_material = MaterialEnum::LambertPhong(LambertPhongMaterial::new(
             MaterialProperties::new(diffuse_color, Self::DIFFUSE_REFLECTANCE, reflectiveness),
             Self::SPECULAR_REFLECTANCE,
             Self::PHONG_EXPONENT,
@@ -121,7 +122,7 @@ impl<'a> MaterialManager<'a> {
         };
 
         let roughness_value = roughness.value();
-        let new_material = Box::new(PhongBRDFMaterial::new(
+        let new_material = MaterialEnum::PhongBRDFMaterial(PhongBRDFMaterial::new(
             fresnel_value,
             roughness_value,
             true,
@@ -154,7 +155,7 @@ impl<'a> MaterialManager<'a> {
 
         let roughness_value = roughness.value();
         let reflectiveness_value = Self::map_reflectiveness_input_from_int_to_float(reflectiveness);
-        let new_material = Box::new(PhongBRDFMaterial::new(
+        let new_material = MaterialEnum::PhongBRDFMaterial(PhongBRDFMaterial::new(
             fresnel_value,
             roughness_value,
             false,

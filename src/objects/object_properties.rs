@@ -1,17 +1,16 @@
 use crate::hitrecord::HitRecord;
-use crate::materials::material_properties::Material;
+use crate::materials::MaterialEnum;
 use crate::ray::Ray;
 use glam::Vec3;
-
 
 #[derive(Clone)]
 pub struct ObjectProperties<'mm> {
     pub position: Vec3,
-    pub material: &'mm dyn Material,
+    pub material: &'mm MaterialEnum,
 }
 
 impl<'mm> ObjectProperties<'mm> {
-    pub const fn new(position: Vec3, material: &'mm dyn Material) -> Self {
+    pub const fn new(position: Vec3, material: &'mm MaterialEnum) -> Self {
         Self { position, material }
     }
 }

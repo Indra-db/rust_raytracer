@@ -1,5 +1,6 @@
 use crate::hitrecord::HitRecord;
 use crate::lights::light_properties::Light;
+use crate::materials::material_properties::Material;
 use crate::math::ColorTypeFunctionality;
 use crate::ray::Ray;
 use crate::world::scenegraph::Scenegraph;

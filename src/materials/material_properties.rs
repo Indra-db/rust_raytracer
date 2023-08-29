@@ -1,4 +1,5 @@
 use crate::hitrecord::HitRecord;
+use enum_dispatch::enum_dispatch;
 use glam::Vec3;
 pub type RGBColor = Vec3;
 
@@ -9,13 +10,23 @@ pub struct MaterialProperties {
 }
 
 impl MaterialProperties {
-    pub const fn new(diffuse_color: RGBColor, diffuse_reflectance: f32, reflectiveness_environment: f32) -> Self {
+    pub const fn new(
+        diffuse_color: RGBColor,
+        diffuse_reflectance: f32,
+        reflectiveness_environment: f32,
+    ) -> Self {
         Self { diffuse_color, diffuse_reflectance, reflectiveness_environment }
     }
 }
 
+#[enum_dispatch]
 pub trait Material: Sync + Send {
-    fn shade(&self, hitrecord: &HitRecord<'_>, light_direction: &Vec3, view_direction: &Vec3) -> RGBColor;
+    fn shade(
+        &self,
+        hitrecord: &HitRecord<'_>,
+        light_direction: &Vec3,
+        view_direction: &Vec3,
+    ) -> RGBColor;
 
     fn get_reflectiveness_environment(&self) -> f32;
 }
@@ -23,7 +34,12 @@ pub trait Material: Sync + Send {
 pub struct DefaultMaterial {}
 
 impl Material for DefaultMaterial {
-    fn shade(&self, _hitrecord: &HitRecord<'_>, _light_direction: &Vec3, _view_direction: &Vec3) -> RGBColor {
+    fn shade(
+        &self,
+        _hitrecord: &HitRecord<'_>,
+        _light_direction: &Vec3,
+        _view_direction: &Vec3,
+    ) -> RGBColor {
         RGBColor::ZERO
     }
 
