@@ -134,9 +134,9 @@ fn main() {
 
         scene_manager.update(delta_time);
 
-        render_system.render(scene_manager.get_current_scene(), &camera, light_manager.get_lights());
+        render_system.render(canvas.get_pixel_data_mut(), scene_manager.get_current_scene(), &camera, light_manager.get_lights());
 
-        let (pixel_data_length, pixel_data) = render_system.get_pixel_data_raw();
+        let (pixel_data_length, pixel_data) = canvas.get_pixel_data_raw();
         canvas.flush(pixel_data, pixel_data_length);
 
         frame_count += 1;

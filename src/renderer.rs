@@ -18,13 +18,12 @@ pub struct Renderer {
     max_bounces: u32,
     pub are_hard_shadows_enabled: bool,
     pub render_mode: u8,
-    pub data: Vec<u32>,
 }
 
 impl Renderer {
     pub fn new(width: u32, height: u32) -> Self {
         let aspect_ratio = width as f32 / height as f32;
-        let max_bounces = 2;
+        let max_bounces = 6;
         Self {
             aspect_ratio,
             width,
@@ -32,56 +31,52 @@ impl Renderer {
             max_bounces,
             are_hard_shadows_enabled: true,
             render_mode: 0,
-            data: vec![0; (width * height) as usize],
         }
     }
 
-    pub fn render(&mut self, scenegraph: &Scenegraph<'_>, camera: &Camera, lights: &Vec<Box<dyn Light + Sync>>) {
+    pub fn render(
+        &self,
+        pixel_data: &mut Vec<u32>,
+        scenegraph: &Scenegraph<'_>,
+        camera: &Camera,
+        lights: &Vec<Box<dyn Light + Sync>>,
+    ) {
         let camera_look_at: &Mat4 = &camera.look_at;
         let scale_factor = camera.get_scale_factor();
 
         // We are grabbing a parallel iterator over rows
-        self.data.par_chunks_mut(self.width as usize).into_par_iter().enumerate().for_each(|(y, row)| {
-            for x in 0..self.width {
-                let mut ray = Ray::new(camera.position, Vec3::ZERO);
-                let mut ray_ss_coords: Vec2 = Vec2::ZERO;
+        pixel_data.par_chunks_mut(self.width as usize).into_par_iter().enumerate().for_each(
+            |(y, row)| {
+                for x in 0..self.width {
+                    let mut ray = Ray::new(camera.position, Vec3::ZERO);
+                    let ray_ss_coords: Vec2 = Vec2::new(
+                        self.get_ray_world_coord_y(y as u32, scale_factor),
+                        self.get_ray_world_coord_x(x, scale_factor),
+                    );
 
-                ray_ss_coords.y = Renderer::get_ray_world_coord_y(y as u32, scale_factor, self.height);
-                ray_ss_coords.x = Renderer::get_ray_world_coord_x(x, scale_factor, self.width, self.aspect_ratio);
+                    let pixel =
+                        *camera_look_at * Vec4::new(ray_ss_coords.x, ray_ss_coords.y, -1.0, 1.0);
 
-                let pixel = *camera_look_at * Vec4::new(ray_ss_coords.x, ray_ss_coords.y, -1.0, 1.0);
-                ray.direction = (pixel.truncate() - ray.origin).normalize();
+                    ray.direction = (pixel.truncate() - ray.origin).normalize();
 
-                let mut reflectiveness_env_mat_first_hit = 0.0;
-                //let mut final_color: RGBColor = RGBColor::ZERO;
-                let mut final_color: RGBColor = Renderer::calculate_color(
-                    self.are_hard_shadows_enabled,
-                    self.render_mode,
-                    self.max_bounces,
-                    scenegraph,
-                    lights,
-                    0,
-                    &mut ray,
-                    &mut reflectiveness_env_mat_first_hit,
-                );
+                    let mut reflectiveness_env_mat_first_hit = 0.0;
 
-                final_color.max_to_one();
+                    let mut final_color: RGBColor = self.calculate_color(
+                        scenegraph,
+                        lights,
+                        0,
+                        &mut ray,
+                        &mut reflectiveness_env_mat_first_hit,
+                    );
+                    final_color.max_to_one();
 
-                let final_color = Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
-                row[x as usize] = final_color;
-            }
-        });
+                    let final_color =
+                        Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
 
-        //            let mut final_color: RGBColor = self.calculate_color(scenegraph, lights, 0);
-        //
-        //            final_color.max_to_one();
-        //
-        //            let final_color = Renderer::to_u32_rgb(final_color.x, final_color.y, final_color.z);
-        //
-        //            self.canvas.draw_pixel(x, y, final_color);
-        //        }
-        //    }
-        //});
+                    row[x as usize] = final_color;
+                }
+            },
+        );
     }
 
     fn to_u32_rgb(r: f32, g: f32, b: f32) -> u32 {
@@ -93,9 +88,7 @@ impl Renderer {
     }
 
     fn calculate_color(
-        are_hard_shadows_enabled: bool,
-        render_mode: u8,
-        max_bounces: u32,
+        &self,
         scenegraph: &Scenegraph<'_>,
         lights: &Vec<Box<dyn Light + Sync>>,
         current_amount_bounces: u32,
@@ -104,7 +97,7 @@ impl Renderer {
     ) -> RGBColor {
         let mut color = RGBColor::ZERO;
 
-        if current_amount_bounces >= max_bounces {
+        if current_amount_bounces >= self.max_bounces {
             return color;
         }
         let mut hit_record = HitRecord::default();
@@ -129,11 +122,13 @@ impl Renderer {
                 continue;
             }
 
-            if are_hard_shadows_enabled {
+            if self.are_hard_shadows_enabled {
                 let mut direction_magnitude_returned = 0.0;
 
-                ray_hit_to_light.direction =
-                    light.get_direction_magnitude(&hit_record.hitpoint, &mut direction_magnitude_returned);
+                ray_hit_to_light.direction = light.get_direction_magnitude(
+                    &hit_record.hitpoint,
+                    &mut direction_magnitude_returned,
+                );
 
                 ray_hit_to_light.t_min = 0.0001; //-> f32::EPSILON is too low.
                 ray_hit_to_light.t_max = direction_magnitude_returned;
@@ -149,8 +144,7 @@ impl Renderer {
                 continue;
             }
 
-            color += Renderer::get_color_mode_according_to_render_mode(
-                render_mode,
+            color += self.get_color_mode_according_to_render_mode(
                 light.as_ref(),
                 lambert_cosine_law,
                 &hit_record,
@@ -163,16 +157,14 @@ impl Renderer {
         if hit_record.material.unwrap().get_reflectiveness_environment().eq(&0.0) {
             return color;
         } else {
-            let reflect = ray.direction - hit_record.normal * (ray.direction.dot(hit_record.normal) * 2.0);
+            let reflect =
+                ray.direction - hit_record.normal * (ray.direction.dot(hit_record.normal) * 2.0);
             lambert_cosine_law = hit_record.normal.dot(reflect);
 
             ray.direction = reflect.normalize();
             ray.origin = hit_record.hitpoint;
 
-            color += Renderer::calculate_color(
-                are_hard_shadows_enabled,
-                render_mode,
-                max_bounces,
+            color += self.calculate_color(
                 scenegraph,
                 lights,
                 current_amount_bounces + 1,
@@ -185,22 +177,22 @@ impl Renderer {
         color
     }
 
-    fn get_ray_world_coord_x(x: u32, scale_factor: f32, width: u32, aspect_ratio: f32) -> f32 {
-        ((2.0 * ((x as f32 + 0.5) / width as f32)) - 1.0) * aspect_ratio * scale_factor
+    fn get_ray_world_coord_x(&self, x: u32, scale_factor: f32) -> f32 {
+        ((2.0 * ((x as f32 + 0.5) / self.width as f32)) - 1.0) * self.aspect_ratio * scale_factor
     }
 
-    fn get_ray_world_coord_y(y: u32, scale_factor: f32, height: u32) -> f32 {
-        (1.0 - (2.0 * ((y as f32 + 0.5) / height as f32))) * scale_factor
+    fn get_ray_world_coord_y(&self, y: u32, scale_factor: f32) -> f32 {
+        (1.0 - (2.0 * ((y as f32 + 0.5) / self.height as f32))) * scale_factor
     }
 
     fn get_color_mode_according_to_render_mode(
-        render_mode: u8,
+        &self,
         light: &dyn Light,
         lambert_cosine_law: f32,
         hit_record: &HitRecord<'_>,
         ray: &Ray,
     ) -> RGBColor {
-        match render_mode {
+        match self.render_mode {
             0 => {
                 light.get_bi_radians(&hit_record.hitpoint)
                     * lambert_cosine_law
@@ -244,21 +236,5 @@ impl Renderer {
             2 => println!("Render mode: BRDF"),
             _ => self.render_mode = 0,
         }
-    }
-
-    pub fn draw_pixel(&mut self, x: u32, y: u32, color: u32) {
-        self.data[(y * self.width + x) as usize] = color;
-    }
-    pub fn data_raw(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const u8, self.data.len() * 4) }
-    }
-
-    /// Returns a parallel iterator over mutable rows of the canvas.
-    pub fn par_rows_mut(&mut self) -> impl ParallelIterator<Item = &mut [u32]> {
-        self.data.par_chunks_mut(self.width as usize).into_par_iter()
-    }
-
-    pub fn get_pixel_data_raw(&self) -> (usize, *const u8) {
-        (self.data.len(), self.data.as_ptr() as *const u8)
     }
 }
