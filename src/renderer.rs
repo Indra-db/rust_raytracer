@@ -1,9 +1,10 @@
-use crate::camera::Camera;
 use crate::hitrecord::HitRecord;
 use crate::lights::light_properties::Light;
+use crate::materials::material_properties::Material;
 use crate::math::ColorTypeFunctionality;
 use crate::ray::Ray;
 use crate::world::scenegraph::Scenegraph;
+use crate::{camera::Camera, lights::LightEnum};
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use rayon::prelude::*;
 pub type RGBColor = Vec3;
@@ -39,7 +40,7 @@ impl Renderer {
         pixel_data: &mut Vec<u32>,
         scenegraph: &Scenegraph<'_>,
         camera: &Camera,
-        lights: &Vec<Box<dyn Light + Sync>>,
+        lights: &Vec<LightEnum>,
     ) {
         let camera_look_at: &Mat4 = &camera.look_at;
         let scale_factor = camera.get_scale_factor();
@@ -88,7 +89,7 @@ impl Renderer {
     fn calculate_color(
         &self,
         scenegraph: &Scenegraph<'_>,
-        lights: &Vec<Box<dyn Light + Sync>>,
+        lights: &Vec<LightEnum>,
         current_amount_bounces: u32,
         ray: &mut Ray,
         reflectiveness_env_mat_first_hit: &mut f32,
@@ -146,7 +147,7 @@ impl Renderer {
             }
 
             color += self.get_color_mode_according_to_render_mode(
-                light.as_ref(),
+                light,
                 lambert_cosine_law,
                 &hit_record,
                 ray,
@@ -191,7 +192,7 @@ impl Renderer {
 
     fn get_color_mode_according_to_render_mode(
         &self,
-        light: &dyn Light,
+        light: &LightEnum,
         lambert_cosine_law: f32,
         hit_record: &HitRecord<'_>,
         ray: &Ray,

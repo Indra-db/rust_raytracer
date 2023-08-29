@@ -1,3 +1,4 @@
+use enum_dispatch::enum_dispatch;
 use glam::Vec3;
 pub type RGBColor = Vec3;
 
@@ -15,6 +16,7 @@ pub struct LightProperties {
     pub light_type: LightType,
 }
 
+#[enum_dispatch]
 pub trait Light: Sync + Send {
     fn get_bi_radians(&self, position: &Vec3) -> RGBColor;
     fn get_direction(&self, position: &Vec3) -> Vec3;
@@ -29,7 +31,12 @@ pub trait Light: Sync + Send {
 }
 
 impl LightProperties {
-    pub const fn new(color: RGBColor, intensity: f32, is_enabled: bool, light_type: LightType) -> Self {
+    pub const fn new(
+        color: RGBColor,
+        intensity: f32,
+        is_enabled: bool,
+        light_type: LightType,
+    ) -> Self {
         Self { color, intensity, is_enabled, light_type }
     }
 

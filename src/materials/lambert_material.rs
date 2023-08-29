@@ -4,11 +4,11 @@ use crate::math::brdf;
 use glam::Vec3;
 pub type RGBColor = Vec3;
 
-pub struct LambertianMaterial {
+pub struct LambertMaterial {
     pub properties: MaterialProperties,
 }
 
-impl LambertianMaterial {
+impl LambertMaterial {
     pub const fn new(
         diffuse_color: RGBColor,
         diffuse_reflectance: f32,
@@ -23,7 +23,7 @@ impl LambertianMaterial {
         }
     }
 }
-impl Material for LambertianMaterial {
+impl Material for LambertMaterial {
     fn shade(
         &self,
         _hitrecord: &HitRecord<'_>,

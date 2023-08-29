@@ -16,6 +16,10 @@ use crate::{
         triangle_mesh::TriangleMesh,
     },
 };
+use crate::{
+    lights::{light_manager::LightManager, LightEnum},
+    objects::ObjectEnum,
+};
 
 use glam::Vec3;
 
@@ -54,23 +58,23 @@ pub fn create_materials(material_manager: &mut MaterialManager<'_>) {
     material_manager.add_phong_brdf_dielectric_material("SkyBlue", RoughnessConstants::Rough, 2);
 }
 
-pub fn create_lights(light_manager: &mut light_manager::LightManager) {
-    light_manager.add_light(Box::new(PointLight::new(
+pub fn create_lights(light_manager: &mut LightManager<LightEnum>) {
+    light_manager.add_light(LightEnum::Point(PointLight::new(
         LightProperties::new(Vec3::new(0.84, 0.8, 0.6), 100.0, true, LightType::Point),
         Vec3::new(-0.5, 5.5, 10.5),
     )));
 
-    light_manager.add_light(Box::new(PointLight::new(
+    light_manager.add_light(LightEnum::Point(PointLight::new(
         LightProperties::new(Vec3::new(0.95, 0.65, 1.0), 50.0, true, LightType::Point),
         Vec3::new(0.3, 3.0, 10.5),
     )));
 
-    light_manager.add_light(Box::new(PointLight::new(
+    light_manager.add_light(LightEnum::Point(PointLight::new(
         LightProperties::new(Vec3::new(0.55, 0.65, 1.0), 35.0, true, LightType::Point),
         Vec3::new(-0.2, 8.0, -2.),
     )));
 
-    light_manager.add_light(Box::new(DirectionalLight::new(
+    light_manager.add_light(LightEnum::Directional(DirectionalLight::new(
         LightProperties::new(Vec3::new(0.8, 0.8, 0.8), 0.5, true, LightType::Directional),
         Vec3::new(0.0, -1.0, 0.0),
     )));
@@ -102,50 +106,50 @@ pub fn create_scene_01<'a>(
         material_manager.get_material("phong_brdf_HotPink_dielectric_Smooth_RE5").unwrap();
     let light_cyan_smooth =
         material_manager.get_material("phong_brdf_LawnGreen_dielectric_Smooth_RE5").unwrap();
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), silver_smooth),
         1.0,
     )));
 
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(1.0, 4.0, 0.0), silver),
         1.0,
     )));
 
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(1.0, 1.0, 0.0), hot_pink_smooth),
         1.0,
     )));
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(3.0, 1.0, 0.0), light_cyan_smooth),
         1.0,
     )));
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(3.0, 4.0, 0.0), chrome),
         1.0,
     )));
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(-1.0, 1.0, 0.0), gold),
         1.0,
     )));
 
-    scene.add_object(Box::new(Plane::new(
+    scene.add_object(ObjectEnum::Plane(Plane::new(
         ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), grey),
         Vec3::new(0.0, 1.0, 0.0),
     )));
 
-    scene.add_object(Box::new(Plane::new(
+    scene.add_object(ObjectEnum::Plane(Plane::new(
         ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), grey),
         Vec3::new(0.0, 0.0, 1.0),
     )));
 
-    scene.add_object(Box::new(Triangle::new(
+    scene.add_object(ObjectEnum::Triangle(Triangle::new(
         ObjectProperties::new(Vec3::new(-2.5, 6.0, 0.0), hot_pink_smooth),
         [Vec3::new(-0.75, 1.5, 0.0), Vec3::new(-0.75, 0.0, 0.0), Vec3::new(0.75, 0.0, 0.0)],
         CullMode::None,
     )));
 
-    scene.add_object(Box::new(Triangle::new(
+    scene.add_object(ObjectEnum::Triangle(Triangle::new(
         ObjectProperties::new(Vec3::new(2.0, 6.0, 0.0), light_cyan_smooth),
         [Vec3::new(-0.75, 1.5, 0.0), Vec3::new(-0.75, 0.0, 0.0), Vec3::new(0.75, 0.0, 0.0)],
         CullMode::None,
@@ -176,28 +180,28 @@ pub fn create_scene_02<'a>(
     let hot_pink_smooth =
         material_manager.get_material("phong_brdf_HotPink_dielectric_Smooth_RE5").unwrap();
 
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(-1.0, 4.0, 0.0), sky_blue_smooth),
         1.0,
     )));
 
-    scene.add_object(Box::new(Sphere::new(
+    scene.add_object(ObjectEnum::Sphere(Sphere::new(
         ObjectProperties::new(Vec3::new(1.0, 4.0, 0.0), hot_pink_smooth),
         1.0,
     )));
 
-    scene.add_object(Box::new(Plane::new(
+    scene.add_object(ObjectEnum::Plane(Plane::new(
         ObjectProperties::new(Vec3::new(0.0, 0.0, 0.0), grey),
         Vec3::new(0.0, 1.0, 0.0),
     )));
 
-    scene.add_object(Box::new(Plane::new(
+    scene.add_object(ObjectEnum::Plane(Plane::new(
         ObjectProperties::new(Vec3::new(0.0, 0.0, -6.0), grey),
         Vec3::new(0.0, 0.0, 1.0),
     )));
 
     //add triangle
-    scene.add_object(Box::new(Triangle::new(
+    scene.add_object(ObjectEnum::Triangle(Triangle::new(
         ObjectProperties::new(Vec3::new(-2.5, 6.0, 0.0), sky_blue_smooth),
         [Vec3::new(-0.75, 1.5, 0.0), Vec3::new(-0.75, 0.0, 0.0), Vec3::new(0.75, 0.0, 0.0)],
         CullMode::None,

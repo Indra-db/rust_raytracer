@@ -1,16 +1,16 @@
-use crate::materials::material_properties::Material;
+use crate::materials::MaterialEnum;
 use glam::Vec3;
 
 #[derive(Clone)]
 pub struct HitRecord<'mm> {
     pub hitpoint: Vec3,
     pub normal: Vec3,
-    pub material: Option<&'mm dyn Material>,
+    pub material: Option<&'mm MaterialEnum>,
     pub t: f32,
 }
 
 impl<'mm> HitRecord<'mm> {
-    pub fn new(hitpoint: Vec3, normal: Vec3, material: &'mm dyn Material, t: f32) -> Self {
+    pub const fn new(hitpoint: Vec3, normal: Vec3, material: &'mm MaterialEnum, t: f32) -> Self {
         Self { hitpoint, normal, material: Some(material), t }
     }
 }
