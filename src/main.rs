@@ -25,7 +25,10 @@ mod world;
 
 use canvas::Canvas;
 use glam::{IVec2, Vec3};
-use lights::{light_manager::LightManager, LightEnum};
+use lights::{
+    light_manager::{Axis, LightManager},
+    LightEnum,
+};
 use materials::material_manager::MaterialManager;
 
 use renderer::Renderer;
@@ -49,7 +52,6 @@ fn print_key_mapping() {
               O: Switch between 'Change Color' or 'Change Position' for the selected light \n\
               Y: Go to previous scene\n\
               U: Go to next scene\n\
-              I: Cycle through the cube maps loaded in \n\
               0: Turn off selected light \n\n\
               1 & 2: Change x/r value of the selected light pos/color \n\
               3 & 4: Change y/g value of the selected light pos/color \n\
@@ -92,6 +94,10 @@ fn main() {
     let mut render_system = Renderer::new(width, height);
     let mut prev_mouse_x = 0;
     let mut prev_mouse_y = 0;
+    let mut should_print_fps = false;
+
+    print_key_mapping();
+
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -107,6 +113,19 @@ fn main() {
                     Keycode::Z => render_system.toggle_shadows(),
                     Keycode::V => render_system.toggle_render_mode(),
                     Keycode::C => render_system.toggle_max_bounce_rays(),
+                    Keycode::P => light_manager.next_selected_light(),
+                    Keycode::O => light_manager.change_interaction_mode(),
+                    Keycode::Num0 => light_manager.toggle_selected_light(),
+                    Keycode::Num1 => light_manager.change_value_of_interaction_mode(Axis::X, -0.04),
+                    Keycode::Num2 => light_manager.change_value_of_interaction_mode(Axis::X, 0.04),
+                    Keycode::Num3 => light_manager.change_value_of_interaction_mode(Axis::Y, -0.04),
+                    Keycode::Num4 => light_manager.change_value_of_interaction_mode(Axis::Y, 0.04),
+                    Keycode::Num5 => light_manager.change_value_of_interaction_mode(Axis::Z, -0.04),
+                    Keycode::Num6 => light_manager.change_value_of_interaction_mode(Axis::Z, 0.04),
+                    Keycode::Num7 => light_manager.change_intensity_of_selected_light(-0.50),
+                    Keycode::Num8 => light_manager.change_intensity_of_selected_light(0.50),
+                    Keycode::M => print_key_mapping(),
+                    Keycode::N => should_print_fps = !should_print_fps,
                     _ => {}
                 },
                 _ => {}
@@ -149,7 +168,9 @@ fn main() {
                 / sdl2::sys::SDL_GetPerformanceFrequency() as f32;
 
             if elapsed_seconds >= 1.0 {
-                println!("FPS: {frame_count}");
+                if should_print_fps {
+                    println!("FPS: {frame_count}");
+                }
                 frame_count = 0;
                 last_fps_time = current_time;
             }

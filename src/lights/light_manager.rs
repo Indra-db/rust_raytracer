@@ -8,16 +8,26 @@ pub enum Axis {
     Z,
 }
 
+enum InteractionMode {
+    Position,
+    Color,
+}
+
 pub struct LightManager<T: Light> {
     lights: Vec<T>,
     selected_light_index: usize,
+    interaction_mode: InteractionMode,
 }
 
 type CommonLightManager = LightManager<LightEnum>;
 
 impl<T: Light> LightManager<T> {
     pub const fn new() -> Self {
-        Self { lights: Vec::new(), selected_light_index: 0 }
+        Self {
+            lights: Vec::new(),
+            selected_light_index: 0,
+            interaction_mode: InteractionMode::Position,
+        }
     }
 
     pub fn add_light(&mut self, light: T) {
@@ -36,10 +46,18 @@ impl<T: Light> LightManager<T> {
 
     pub fn toggle_selected_light(&mut self) {
         self.lights[self.selected_light_index].toggle_light();
-
-        todo!("not safe")
     }
 
+    pub fn change_value_of_interaction_mode(&mut self, axis: Axis, value: f32) {
+        match self.interaction_mode {
+            InteractionMode::Position => {
+                self.change_pos_selected_light(axis, value);
+            }
+            InteractionMode::Color => {
+                self.change_color_of_selected_light(axis, value);
+            }
+        }
+    }
     pub fn change_pos_selected_light(&mut self, axis: Axis, value: f32) {
         let light = &mut self.lights[self.selected_light_index];
 
@@ -95,6 +113,19 @@ impl<T: Light> LightManager<T> {
 
     pub fn num_lights(&self) -> usize {
         self.lights.len()
+    }
+
+    pub fn change_interaction_mode(&mut self) {
+        match self.interaction_mode {
+            InteractionMode::Position => {
+                println!("Interaction mode changed to color");
+                self.interaction_mode = InteractionMode::Color;
+            }
+            InteractionMode::Color => {
+                println!("Interaction mode changed to position");
+                self.interaction_mode = InteractionMode::Position;
+            }
+        }
     }
 
     pub const fn get_lights(&self) -> &Vec<T> {
