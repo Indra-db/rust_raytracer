@@ -1,6 +1,6 @@
 # rust_raytracer
 
-This is my first (bigger) project using the Rust programming language, focusing on raytracing.
+This is my first (bigger) personal project using the Rust programming language, focusing on raytracing.
 The raytracing code is not meant to be perfect, my main goal was to learn more about Rust.
 
 significant past updates are available in separate branches for myself to look back at quickly.
